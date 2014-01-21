@@ -13,6 +13,7 @@ func main() {
 	flag.Parse()
 
 	http.Handle("/download", downloader.NewDownloadHanler())
+	http.Handle("/redirect", downloader.NewRedirectorHandler())
 
 	s := &http.Server{
 		Addr:           ":" + *port,

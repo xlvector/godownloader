@@ -10,9 +10,11 @@ import (
 )
 
 func call() int64 {
-	root := "http://localhost:8113/download"
+	host := flag.String("host", "http://localhost:8113/download", "host")
 	link := flag.String("link", "", "link to download")
 	flag.Parse()
+
+	root := *host
 
 	jsonBlob := "{\"links\": []}"
 

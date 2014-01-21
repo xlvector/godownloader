@@ -1,0 +1,7 @@
+{
+	"downloader_host" : "http://localhost:8113/download",
+	"redirector_host" : "http://localhost:8114/redirect",
+	"site_patterns" : [
+		"*.edu.*"
+	]
+}

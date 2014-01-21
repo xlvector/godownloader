@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -52,8 +53,9 @@ type PostBody struct {
 }
 
 type Response struct {
-	ChannelLength int `json:"channel_length"`
-	CacheSize     int `json:"cache_size"`
+	PostChannelLength      int `json:"post_chan_length"`
+	ExtractedChannelLength int `json:"extract_chan_length"`
+	CacheSize              int `json:"cache_size"`
 }
 
 type WebPage struct {
@@ -67,10 +69,11 @@ func (self *WebPage) ToString() string {
 }
 
 type DownloadHandler struct {
-	LinksChannel chan string
-	Downloader   *HTTPGetDownloader
-	signals      chan os.Signal
-	cache        []*WebPage
+	LinksChannel          chan string
+	Downloader            *HTTPGetDownloader
+	signals               chan os.Signal
+	cache                 []*WebPage
+	ExtractedLinksChannel chan string
 }
 
 func (self *DownloadHandler) FlushCache2Disk() {
@@ -92,6 +95,10 @@ func (self *DownloadHandler) Download() {
 		if err != nil {
 			fmt.Println(err)
 		} else {
+			elinks := ExtractLinks([]byte(html), link)
+			for _, elink := range elinks {
+				self.ExtractedLinksChannel <- elink
+			}
 			self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
 		}
 
@@ -101,9 +108,36 @@ func (self *DownloadHandler) Download() {
 	}
 }
 
+func (self *DownloadHandler) ProcExtractedLinks() {
+	fmt.Println(ConfigInstance().RedirectorHost)
+	tm := time.Now().Unix()
+	lm := make(map[string]bool)
+	for link := range self.ExtractedLinksChannel {
+		lm[link] = true
+		tm1 := time.Now().Unix()
+
+		if tm1-tm > 60 || len(lm) > 100 {
+			pb := PostBody{}
+			pb.Links = []string{}
+			for lk, _ := range lm {
+				pb.Links = append(pb.Links, lk)
+			}
+			jsonBlob, err := json.Marshal(&pb)
+			if err == nil {
+				post := url.Values{}
+				post.Set("links", string(jsonBlob))
+				http.PostForm(ConfigInstance().RedirectorHost, post)
+			}
+			tm = time.Now().Unix()
+			lm = make(map[string]bool)
+		}
+	}
+}
+
 func NewDownloadHanler() *DownloadHandler {
 	ret := DownloadHandler{}
 	ret.LinksChannel = make(chan string, 10000)
+	ret.ExtractedLinksChannel = make(chan string, 10000)
 	ret.Downloader = NewHTTPGetDownloader()
 	ret.signals = make(chan os.Signal, 1)
 	signal.Notify(ret.signals, syscall.SIGINT)
@@ -114,6 +148,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}()
 	ret.cache = []*WebPage{}
 	go ret.Download()
+	go ret.ProcExtractedLinks()
 	return &ret
 }
 
@@ -135,8 +170,9 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 	}
 
 	ret := Response{
-		ChannelLength: len(self.LinksChannel),
-		CacheSize:     len(self.cache),
+		PostChannelLength:      len(self.LinksChannel),
+		ExtractedChannelLength: len(self.ExtractedLinksChannel),
+		CacheSize:              len(self.cache),
 	}
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
