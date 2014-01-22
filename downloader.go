@@ -52,9 +52,13 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 		return "", err
 	}
 	resp, err := self.client.Do(req)
+
 	if err != nil {
 		return "", err
 	} else {
+		if resp.Header.Get("Content-Type") != "text/html" {
+			return "", errors.New("non html page")
+		}
 		defer resp.Body.Close()
 		html, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
