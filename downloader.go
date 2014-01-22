@@ -96,6 +96,7 @@ type DownloadHandler struct {
 	signals               chan os.Signal
 	cache                 []*WebPage
 	ExtractedLinksChannel chan string
+	patterns              []*regexp.Regexp
 }
 
 func (self *DownloadHandler) FlushCache2Disk() {
@@ -130,10 +131,22 @@ func (self *DownloadHandler) Download() {
 	}
 }
 
+func (self *DownloadHandler) Match(link string) bool {
+	for _, pt := range self.patterns {
+		if pt.FindString(link) == link {
+			return true
+		}
+	}
+	return false
+}
+
 func (self *DownloadHandler) ProcExtractedLinks() {
 	tm := time.Now().Unix()
 	lm := make(map[string]bool)
 	for link := range self.ExtractedLinksChannel {
+		if !self.ExtractedLinksChannel(link) {
+			continue
+		}
 		lm[link] = true
 		tm1 := time.Now().Unix()
 
@@ -157,6 +170,10 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 
 func NewDownloadHanler() *DownloadHandler {
 	ret := DownloadHandler{}
+	for _, pt := range ConfigInstance().SitePatterns {
+		re := regexp.MustCompile(pt)
+		ret.patterns = append(ret.patterns, re)
+	}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.LinksChannel = make(chan string, 10000)
 	ret.ExtractedLinksChannel = make(chan string, 10000)
@@ -196,9 +213,9 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		ExtractedChannelLength: len(self.ExtractedLinksChannel),
 		CacheSize:              len(self.cache),
 	}
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".postchannelsize", int64(ret.PostChannelLength), 1.0)
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".cachesize", int64(ret.CacheSize), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+".postchannelsize", int64(ret.PostChannelLength), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+".cachesize", int64(ret.CacheSize), 1.0)
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
 }
