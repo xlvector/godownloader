@@ -10,6 +10,10 @@ import (
 	"regexp"
 )
 
+const (
+	REDIRECTOR_QUEUE_SIZE = 100000
+)
+
 type RedirectorHandler struct {
 	metricSender   *graphite.Client
 	processedLinks *BloomFilter
@@ -61,7 +65,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.linksChannel = []chan string{}
 	for i := 0; i < ConfigInstance().RedirectChanNum; i++ {
-		ret.linksChannel = append(ret.linksChannel, make(chan string, 100000))
+		ret.linksChannel = append(ret.linksChannel, make(chan string, REDIRECTOR_QUEUE_SIZE))
 	}
 	ret.processedLinks = NewBloomFilter()
 	for _, pt := range ConfigInstance().SitePatterns {
@@ -92,7 +96,9 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			}
 			ci := Hash(ExtractDomain(link)) % int32(ConfigInstance().RedirectChanNum)
 			fmt.Println("channel length", ci, len(self.linksChannel[ci]))
-			self.linksChannel[ci] <- link
+			if len(self.linksChannel[ci]) < REDIRECTOR_QUEUE_SIZE {
+				self.linksChannel[ci] <- link
+			}
 		}
 	}
 	fmt.Fprint(w, "")

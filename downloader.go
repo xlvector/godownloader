@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36"
+	USER_AGENT            = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36"
+	DOWNLOADER_QUEUE_SIZE = 10000
 )
 
 type Downloader interface {
@@ -125,7 +126,9 @@ func (self *DownloadHandler) Download() {
 		} else {
 			elinks := ExtractLinks([]byte(html), link)
 			for _, elink := range elinks {
-				self.ExtractedLinksChannel <- elink
+				if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
+					self.ExtractedLinksChannel <- elink
+				}
 			}
 			self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
 		}
@@ -187,8 +190,8 @@ func NewDownloadHanler() *DownloadHandler {
 		ret.patterns = append(ret.patterns, re)
 	}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
-	ret.LinksChannel = make(chan string, 10000)
-	ret.ExtractedLinksChannel = make(chan string, 10000)
+	ret.LinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
+	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
 	ret.signals = make(chan os.Signal, 1)
 	signal.Notify(ret.signals, syscall.SIGINT)
@@ -216,7 +219,9 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			self.LinksChannel <- link
+			if len(self.LinksChannel) < DOWNLOADER_QUEUE_SIZE {
+				self.LinksChannel <- link
+			}
 		}
 	}
 
