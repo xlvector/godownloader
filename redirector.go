@@ -82,25 +82,12 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
+			if !self.Match(link) {
+				continue
+			}
 			ci := Hash(ExtractDomain(link)) % int32(ConfigInstance().RedirectChanNum)
 			self.linksChannel[ci] <- link
 		}
 	}
-
-	linkChannelTotalSize := 0
-	maxChannelSize := 0
-	for _, cn := range self.linksChannel {
-		size := len(cn)
-		linkChannelTotalSize += size
-		if maxChannelSize < size {
-			maxChannelSize = size
-		}
-	}
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".channelsize", int64(linkChannelTotalSize), 1.0)
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".maxchannelsize", int64(maxChannelSize), 1.0)
-	ret := Response{
-		PostChannelLength: linkChannelTotalSize,
-	}
-	output, _ := json.Marshal(&ret)
-	fmt.Fprint(w, string(output))
+	fmt.Fprint(w, "")
 }
