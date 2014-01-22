@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"syscall"
 	"time"
@@ -144,7 +145,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 	tm := time.Now().Unix()
 	lm := make(map[string]bool)
 	for link := range self.ExtractedLinksChannel {
-		if !self.ExtractedLinksChannel(link) {
+		if !self.Match(link) {
 			continue
 		}
 		lm[link] = true
