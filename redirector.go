@@ -9,9 +9,14 @@ import (
 	"time"
 )
 
+const (
+	REDIRECT_CHAN_NUM = 512
+	PAGE_PER_MINUTE   = 5
+)
+
 type RedirectorHandler struct {
 	processedLinks *BloomFilter
-	linksChannel   chan string
+	linksChannel   []chan string
 	patterns       []*regexp.Regexp
 }
 
@@ -24,49 +29,45 @@ func (self *RedirectorHandler) Match(link string) bool {
 	return false
 }
 
-func (self *RedirectorHandler) Redirect() {
-	lm := make(map[string]bool)
-	tm := time.Now().Unix()
-	fmt.Println(ConfigInstance().DownloaderHost)
-	for link := range self.linksChannel {
+func (self *RedirectorHandler) Redirect(ci int) {
+	for link := range self.linksChannel[ci] {
 		if !self.Match(link) {
 			continue
 		}
-		fmt.Println(link)
 		if self.processedLinks.Contains(link) {
 			continue
 		}
 		self.processedLinks.Add(link)
-		lm[link] = true
-		tm1 := time.Now().Unix()
-		if tm1-tm > 60 || len(lm) > 100 {
-			pb := PostBody{}
-			pb.Links = []string{}
-			for lk, _ := range lm {
-				pb.Links = append(pb.Links, lk)
-			}
-			jsonBlob, err := json.Marshal(&pb)
-			if err == nil {
-				post := url.Values{}
-				post.Set("links", string(jsonBlob))
 
-				http.PostForm(ConfigInstance().DownloaderHost, post)
-			}
-			tm = time.Now().Unix()
-			lm = make(map[string]bool)
+		fmt.Println(link)
+
+		pb := PostBody{}
+		pb.Links = []string{link}
+		jsonBlob, err := json.Marshal(&pb)
+		if err == nil {
+			post := url.Values{}
+			post.Set("links", string(jsonBlob))
+
+			http.PostForm(ConfigInstance().DownloaderHost, post)
 		}
+		time.Sleep(60 * time.Second / PAGE_PER_MINUTE)
 	}
 }
 
 func NewRedirectorHandler() *RedirectorHandler {
 	ret := RedirectorHandler{}
-	ret.linksChannel = make(chan string, 10000)
+	ret.linksChannel = []chan string{}
+	for i := 0; i < REDIRECT_CHAN_NUM; i++ {
+		ret.linksChannel = append(ret.linksChannel, make(chan string, 10000))
+	}
 	ret.processedLinks = NewBloomFilter()
 	for _, pt := range ConfigInstance().SitePatterns {
 		re := regexp.MustCompile(pt)
 		ret.patterns = append(ret.patterns, re)
 	}
-	go ret.Redirect()
+	for i := 0; i < REDIRECT_CHAN_NUM; i++ {
+		go ret.Redirect(i)
+	}
 	return &ret
 }
 
@@ -83,12 +84,17 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			self.linksChannel <- link
+			ci := Hash(ExtractDomain(link)) % REDIRECT_CHAN_NUM
+			self.linksChannel[ci] <- link
 		}
 	}
 
+	linkChannelTotalSize := 0
+	for _, cn := range self.linksChannel {
+		linkChannelTotalSize += len(cn)
+	}
 	ret := Response{
-		PostChannelLength: len(self.linksChannel),
+		PostChannelLength: linkChannelTotalSize,
 	}
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,22 +15,43 @@ import (
 	"time"
 )
 
+const (
+	USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36"
+)
+
+var TIME_OUT = 5 * time.Second
+
 type Downloader interface {
 	Download(url string) (string, error)
 }
 
 type HTTPGetDownloader struct {
 	cleaner *HTMLCleaner
+	client  *http.Client
+}
+
+func dialTimeout(network, addr string) (net.Conn, error) {
+	return net.DialTimeout(network, addr, TIME_OUT)
 }
 
 func NewHTTPGetDownloader() *HTTPGetDownloader {
 	ret := HTTPGetDownloader{}
 	ret.cleaner = NewHTMLCleaner()
+	ret.client = &http.Client{
+		Transport: &http.Transport{
+			Dial: dialTimeout,
+		},
+	}
 	return &ret
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("User-Agent", USER_AGENT)
+	if err != nil {
+		return "", err
+	}
+	resp, err := self.client.Do(req)
 	if err != nil {
 		return "", err
 	} else {
@@ -109,7 +131,6 @@ func (self *DownloadHandler) Download() {
 }
 
 func (self *DownloadHandler) ProcExtractedLinks() {
-	fmt.Println(ConfigInstance().RedirectorHost)
 	tm := time.Now().Unix()
 	lm := make(map[string]bool)
 	for link := range self.ExtractedLinksChannel {

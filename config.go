@@ -2,8 +2,10 @@ package downloader
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"sync"
+	"time"
 )
 
 type Config struct {
@@ -27,13 +29,18 @@ func NewConfig(path string) *Config {
 }
 
 var configInstance *Config = nil
+var lastLoadConfigTime int64
 var lock sync.Mutex
 
 func ConfigInstance() *Config {
-	if configInstance == nil {
+	if lastLoadConfigTime == 0 {
+		lastLoadConfigTime = time.Now().Unix()
+	}
+	if configInstance == nil || (time.Now().Unix()-lastLoadConfigTime) > 60 {
 		lock.Lock()
 		if configInstance == nil {
 			configInstance = NewConfig("config.json")
+			fmt.Println("reload config")
 		}
 		lock.Unlock()
 	}
