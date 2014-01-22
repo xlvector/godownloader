@@ -44,7 +44,8 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			post := url.Values{}
 			post.Set("links", string(jsonBlob))
 
-			_, err := http.PostForm(ConfigInstance().DownloaderHost, post)
+			resp, err := http.PostForm(ConfigInstance().DownloaderHost, post)
+			defer resp.Body.Close()
 			if err != nil {
 				fmt.Println(err)
 			}
