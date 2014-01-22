@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	REDIRECTOR_QUEUE_SIZE = 100000
+	REDIRECTOR_QUEUE_SIZE = 1000000
 )
 
 type RedirectorHandler struct {
