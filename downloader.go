@@ -212,6 +212,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}()
 	ret.cache = []*WebPage{}
 	go ret.Download()
+	go ret.ExtractLinks()
 	go ret.ProcExtractedLinks()
 	return &ret
 }
