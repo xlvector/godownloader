@@ -102,5 +102,21 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			}
 		}
 	}
+	linkChannelTotalSize := 0
+
+	maxChannelSize := 0
+
+	for _, cn := range self.linksChannel {
+
+		size := len(cn)
+
+		linkChannelTotalSize += size
+
+		if maxChannelSize < size {
+			maxChannelSize = size
+		}
+	}
+	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".channelsize", int64(linkChannelTotalSize), 1.0)
+	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".maxchannelsize", int64(maxChannelSize), 1.0)
 	fmt.Fprint(w, "")
 }
