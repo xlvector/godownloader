@@ -52,7 +52,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 				fmt.Println(err)
 			}
 		}
-		//time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
+		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
 	}
 }
 
