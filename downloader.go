@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"crawler/downloader/graphite"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,8 +20,6 @@ const (
 	USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36"
 )
 
-var TIME_OUT = 5 * time.Second
-
 type Downloader interface {
 	Download(url string) (string, error)
 }
@@ -31,7 +30,7 @@ type HTTPGetDownloader struct {
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
-	return net.DialTimeout(network, addr, TIME_OUT)
+	return net.DialTimeout(network, addr, time.Duration(ConfigInstance().DownloadTimeout)*time.Second)
 }
 
 func NewHTTPGetDownloader() *HTTPGetDownloader {
@@ -91,6 +90,7 @@ func (self *WebPage) ToString() string {
 }
 
 type DownloadHandler struct {
+	metricSender          *graphite.Client
 	LinksChannel          chan string
 	Downloader            *HTTPGetDownloader
 	signals               chan os.Signal
@@ -157,6 +157,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 
 func NewDownloadHanler() *DownloadHandler {
 	ret := DownloadHandler{}
+	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.LinksChannel = make(chan string, 10000)
 	ret.ExtractedLinksChannel = make(chan string, 10000)
 	ret.Downloader = NewHTTPGetDownloader()
@@ -195,6 +196,9 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		ExtractedChannelLength: len(self.ExtractedLinksChannel),
 		CacheSize:              len(self.cache),
 	}
+	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".postchannelsize", int64(ret.PostChannelLength), 1.0)
+	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
+	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".cachesize", int64(ret.CacheSize), 1.0)
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
 }

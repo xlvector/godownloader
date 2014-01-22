@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"crawler/downloader/graphite"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,12 +10,8 @@ import (
 	"time"
 )
 
-const (
-	REDIRECT_CHAN_NUM = 512
-	PAGE_PER_MINUTE   = 5
-)
-
 type RedirectorHandler struct {
+	metricSender   *graphite.Client
 	processedLinks *BloomFilter
 	linksChannel   []chan string
 	patterns       []*regexp.Regexp
@@ -50,14 +47,15 @@ func (self *RedirectorHandler) Redirect(ci int) {
 
 			http.PostForm(ConfigInstance().DownloaderHost, post)
 		}
-		time.Sleep(60 * time.Second / PAGE_PER_MINUTE)
+		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
 	}
 }
 
 func NewRedirectorHandler() *RedirectorHandler {
 	ret := RedirectorHandler{}
+	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.linksChannel = []chan string{}
-	for i := 0; i < REDIRECT_CHAN_NUM; i++ {
+	for i := 0; i < ConfigInstance().RedirectChanNum; i++ {
 		ret.linksChannel = append(ret.linksChannel, make(chan string, 10000))
 	}
 	ret.processedLinks = NewBloomFilter()
@@ -65,7 +63,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 		re := regexp.MustCompile(pt)
 		ret.patterns = append(ret.patterns, re)
 	}
-	for i := 0; i < REDIRECT_CHAN_NUM; i++ {
+	for i := 0; i < ConfigInstance().RedirectChanNum; i++ {
 		go ret.Redirect(i)
 	}
 	return &ret
@@ -84,7 +82,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			ci := Hash(ExtractDomain(link)) % REDIRECT_CHAN_NUM
+			ci := Hash(ExtractDomain(link)) % int32(ConfigInstance().RedirectChanNum)
 			self.linksChannel[ci] <- link
 		}
 	}
@@ -93,6 +91,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	for _, cn := range self.linksChannel {
 		linkChannelTotalSize += len(cn)
 	}
+	self.metricSender.Gauge("crawler.redirector."+GetHostName()+".channelsize", int64(linkChannelTotalSize), 1.0)
 	ret := Response{
 		PostChannelLength: linkChannelTotalSize,
 	}

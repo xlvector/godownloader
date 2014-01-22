@@ -5,19 +5,32 @@ import (
 	"fmt"
 	"io/ioutil"
 	"sync"
-	"time"
 )
 
 type Config struct {
-	DownloaderHost string   `json:"downloader_host"`
-	RedirectorHost string   `json:"redirector_host"`
-	SitePatterns   []string `json:"site_patterns"`
+	DownloaderHost  string   `json:"downloader_host"`
+	RedirectorHost  string   `json:"redirector_host"`
+	GraphiteHost    string   `json:"graphite_host"`
+	SitePatterns    []string `json:"site_patterns"`
+	PagePerMinute   int      `json:"page_per_minute"`
+	DownloadTimeout int64    `json:"download_timeout"`
+	RedirectChanNum int      `json:"redirect_chan_num"`
+}
+
+func NewDefaultConfig() *Config {
+	config := Config{
+		PagePerMinute:   10,
+		DownloadTimeout: 10,
+		RedirectChanNum: 10,
+	}
+	return &config
 }
 
 func NewConfig(path string) *Config {
 	text, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return NewDefaultConfig()
 	}
 
 	config := Config{}
@@ -29,18 +42,14 @@ func NewConfig(path string) *Config {
 }
 
 var configInstance *Config = nil
-var lastLoadConfigTime int64
 var lock sync.Mutex
 
 func ConfigInstance() *Config {
-	if lastLoadConfigTime == 0 {
-		lastLoadConfigTime = time.Now().Unix()
-	}
-	if configInstance == nil || (time.Now().Unix()-lastLoadConfigTime) > 60 {
+	if configInstance == nil {
 		lock.Lock()
 		if configInstance == nil {
 			configInstance = NewConfig("config.json")
-			fmt.Println("reload config")
+			fmt.Println(configInstance)
 		}
 		lock.Unlock()
 	}
