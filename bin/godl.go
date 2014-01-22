@@ -5,10 +5,12 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"runtime"
 	"time"
 )
 
 func main() {
+	runtime.GOMAXPROCS(4)
 	port := flag.String("port", "8113", "port number")
 	flag.Parse()
 

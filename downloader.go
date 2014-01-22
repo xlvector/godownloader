@@ -134,17 +134,19 @@ func (self *DownloadHandler) Download() {
 
 func (self *DownloadHandler) ExtractLinks() {
 	for page := range self.htmlChannel {
-		elinks := ExtractLinks([]byte(page.Html), page.Link)
-		for _, elink := range elinks {
-			if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-				self.ExtractedLinksChannel <- elink
+		go func() {
+			elinks := ExtractLinks([]byte(page.Html), page.Link)
+			for _, elink := range elinks {
+				if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
+					self.ExtractedLinksChannel <- elink
+				}
 			}
-		}
+		}()
 		self.cache = append(self.cache, page)
-	}
 
-	if len(self.cache) > 1000 {
-		self.FlushCache2Disk()
+		if len(self.cache) > 1000 {
+			self.FlushCache2Disk()
+		}
 	}
 }
 
