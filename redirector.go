@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"time"
 )
 
 type RedirectorHandler struct {
