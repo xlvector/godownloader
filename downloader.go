@@ -146,6 +146,7 @@ func (self *DownloadHandler) Match(link string) bool {
 }
 
 func (self *DownloadHandler) ProcExtractedLinks() {
+	procn := 0
 	tm := time.Now().Unix()
 	lm := make(map[string]bool)
 	for link := range self.ExtractedLinksChannel {
@@ -155,7 +156,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 		lm[link] = true
 		tm1 := time.Now().Unix()
 
-		if tm1-tm > 60 || len(lm) > 100 {
+		if tm1-tm > 60 || len(lm) > 100 || procn < 10 {
 			pb := PostBody{}
 			pb.Links = []string{}
 			for lk, _ := range lm {
@@ -170,6 +171,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 			tm = time.Now().Unix()
 			lm = make(map[string]bool)
 		}
+		procn += 1
 	}
 }
 
