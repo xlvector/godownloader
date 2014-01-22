@@ -206,7 +206,6 @@ func NewDownloadHanler() *DownloadHandler {
 		ret.FlushCache2Disk()
 		os.Exit(0)
 	}()
-	ret.cache = []*WebPage{}
 	go ret.Download()
 	go ret.ProcExtractedLinks()
 	go ret.FlushCache2Disk()
