@@ -45,9 +45,12 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			post := url.Values{}
 			post.Set("links", string(jsonBlob))
 
-			http.PostForm(ConfigInstance().DownloaderHost, post)
+			_, err := http.PostForm(ConfigInstance().DownloaderHost, post)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
-		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
+		//time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
 	}
 }
 
@@ -86,6 +89,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 				continue
 			}
 			ci := Hash(ExtractDomain(link)) % int32(ConfigInstance().RedirectChanNum)
+			fmt.Println("channel length", ci, len(self.linksChannel[ci]))
 			self.linksChannel[ci] <- link
 		}
 	}
