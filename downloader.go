@@ -127,7 +127,9 @@ func (self *DownloadHandler) Download() {
 			if err != nil {
 				fmt.Println(err)
 			}
-			self.htmlChannel <- &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
+			if len(self.htmlChannel) < DOWNLOADER_QUEUE_SIZE {
+				self.htmlChannel <- &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
+			}
 		}()
 	}
 }
