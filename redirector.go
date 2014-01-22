@@ -51,11 +51,13 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			post.Set("links", string(jsonBlob))
 
 			resp, err := http.PostForm(ConfigInstance().DownloaderHost, post)
-			defer resp.Body.Close()
-			ioutil.ReadAll(resp.Body)
 			if err != nil {
 				fmt.Println(err)
+				continue
 			}
+			defer resp.Body.Close()
+			ioutil.ReadAll(resp.Body)
+
 		}
 		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
 	}
