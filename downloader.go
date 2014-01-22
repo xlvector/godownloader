@@ -168,6 +168,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 				post.Set("links", string(jsonBlob))
 				resp, err := http.PostForm(ConfigInstance().RedirectorHost, post)
 				defer resp.Body.Close()
+				ioutil.ReadAll(resp.Body)
 				if err != nil {
 					fmt.Println(err)
 				}

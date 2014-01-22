@@ -4,6 +4,7 @@ import (
 	"crawler/downloader/graphite"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -46,6 +47,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 
 			resp, err := http.PostForm(ConfigInstance().DownloaderHost, post)
 			defer resp.Body.Close()
+			ioutil.ReadAll(resp.Body)
 			if err != nil {
 				fmt.Println(err)
 			}
