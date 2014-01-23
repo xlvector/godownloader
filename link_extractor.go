@@ -30,7 +30,7 @@ func ConcatLink(root0 string, link0 string) string {
 	}
 	link := strings.ToLower(link0)
 	if strings.Index(link, "http://") == 0 || strings.Index(link, "https://") == 0 {
-		return strings.Replace(link0, "//", "/", -1)
+		return link0
 	} else {
 		srcTks := strings.Split(root, "/")
 		dstTks := strings.Split(link0, "/")
@@ -61,9 +61,9 @@ func ConcatLink(root0 string, link0 string) string {
 			}
 		}
 		if link0[len(link0)-1] != '/' {
-			return strings.Replace(strings.TrimRight(ret, "/"), "//", "/", -1)
+			return strings.TrimRight(ret, "/")
 		} else {
-			return strings.Replace(ret, "//", "/", -1)
+			return ret
 		}
 	}
 }

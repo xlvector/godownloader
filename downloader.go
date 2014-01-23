@@ -50,7 +50,7 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 		Transport: &http.Transport{
 			Dial:                  dialTimeout,
 			DisableKeepAlives:     true,
-			ResponseHeaderTimeout: time.Second,
+			ResponseHeaderTimeout: 3 * time.Second,
 		},
 	}
 	return &ret
