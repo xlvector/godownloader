@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -58,11 +59,13 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
+		fmt.Println("begin", url)
 		if resp.Header.Get("Content-Type") != "text/html" {
 			return "", errors.New("non html page")
 		}
 		defer resp.Body.Close()
 		html, err := ioutil.ReadAll(resp.Body)
+		fmt.Println("readall", url)
 		if err != nil {
 			return "", err
 		} else {
@@ -70,7 +73,9 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 			if utf8Html == nil {
 				return "", errors.New("conver to utf8 error")
 			}
+			fmt.Println("utf8 finish", url)
 			cleanHtml := self.cleaner.CleanHTML(utf8Html)
+			fmt.Println("clean finish", url)
 			return string(cleanHtml), nil
 		}
 	}
@@ -116,6 +121,7 @@ func (self *DownloadHandler) FlushCache2Disk() {
 		f.WriteString(page.ToString() + "\n")
 	}
 	self.cache = []*WebPage{}
+	runtime.GC()
 }
 
 func (self *DownloadHandler) Download() {
