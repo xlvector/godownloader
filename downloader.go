@@ -57,6 +57,9 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
+	if len(url) > 200 {
+		return "", nil
+	}
 	fmt.Println("new request", url)
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", USER_AGENT)
