@@ -48,8 +48,9 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 	ret.cleaner = NewHTMLCleaner()
 	ret.client = &http.Client{
 		Transport: &http.Transport{
-			Dial:              dialTimeout,
-			DisableKeepAlives: true,
+			Dial:                  dialTimeout,
+			DisableKeepAlives:     true,
+			ResponseHeaderTimeout: time.Second,
 		},
 	}
 	return &ret
