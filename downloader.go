@@ -33,7 +33,14 @@ type HTTPGetDownloader struct {
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
-	return net.DialTimeout(network, addr, time.Duration(ConfigInstance().DownloadTimeout)*time.Second)
+	timeout := time.Duration(ConfigInstance().DownloadTimeout) * time.Second
+	deadline := time.Now().Add(timeout)
+	c, err := net.DialTimeout(network, addr, timeout)
+	if err != nil {
+		return nil, err
+	}
+	c.SetDeadline(deadline)
+	return c, nil
 }
 
 func NewHTTPGetDownloader() *HTTPGetDownloader {
