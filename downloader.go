@@ -20,7 +20,7 @@ import (
 
 const (
 	USER_AGENT            = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36"
-	DOWNLOADER_QUEUE_SIZE = 10000
+	DOWNLOADER_QUEUE_SIZE = 1000
 )
 
 type Downloader interface {
@@ -153,7 +153,7 @@ func (self *DownloadHandler) Download() {
 			}
 		}
 
-		if len(self.cache) > 1000 {
+		if len(self.cache) > 200 {
 			self.FlushCache2Disk()
 		}
 	}
