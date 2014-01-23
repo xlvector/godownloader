@@ -20,6 +20,18 @@ func ExtractDomain(path string) string {
 	return ret
 }
 
+func IsValidLink(link string) bool {
+	if len(link) > 255 {
+		return false
+	}
+	for _, ch := range link {
+		if uint8(ch) > 127 {
+			return false
+		}
+	}
+	return true
+}
+
 func ConcatLink(root0 string, link0 string) string {
 	if len(link0) == 0 {
 		return root0

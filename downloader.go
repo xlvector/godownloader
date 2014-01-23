@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	USER_AGENT            = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36"
+	USER_AGENT            = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31"
 	DOWNLOADER_QUEUE_SIZE = 1000
 )
 
@@ -57,7 +57,7 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
-	if len(url) > 200 {
+	if !IsValidLink(url) {
 		return "", nil
 	}
 	fmt.Println("new request", url)
@@ -148,7 +148,7 @@ func (self *DownloadHandler) Download() {
 		self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
 		elinks := ExtractLinks([]byte(html), link)
 		for _, elink := range elinks {
-			if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
+			if IsValidLink(elink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
 				self.ExtractedLinksChannel <- elink
 			}
 		}
