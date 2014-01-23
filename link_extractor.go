@@ -63,7 +63,7 @@ func ConcatLink(root0 string, link0 string) string {
 		if link0[len(link0)-1] != '/' {
 			return strings.TrimRight(ret, "/")
 		} else {
-			return ret
+			return strings.Replace(ret, "//", "/", -1)
 		}
 	}
 }

@@ -101,7 +101,6 @@ type DownloadHandler struct {
 	LinksChannel          chan string
 	Downloader            *HTTPGetDownloader
 	signals               chan os.Signal
-	htmlChannel           chan *WebPage
 	cache                 []*WebPage
 	ExtractedLinksChannel chan string
 	patterns              []*regexp.Regexp
@@ -121,30 +120,19 @@ func (self *DownloadHandler) FlushCache2Disk() {
 
 func (self *DownloadHandler) Download() {
 	for link := range self.LinksChannel {
-		go func() {
-			fmt.Println(link)
-			html, err := self.Downloader.Download(link)
-			if err != nil {
-				fmt.Println(err)
-			}
-			if len(self.htmlChannel) < DOWNLOADER_QUEUE_SIZE {
-				self.htmlChannel <- &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
-			}
-		}()
-	}
-}
+		fmt.Println(link)
+		html, err := self.Downloader.Download(link)
+		if err != nil {
+			fmt.Println(err)
+		}
 
-func (self *DownloadHandler) ExtractLinks() {
-	for page := range self.htmlChannel {
-		go func() {
-			elinks := ExtractLinks([]byte(page.Html), page.Link)
-			for _, elink := range elinks {
-				if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-					self.ExtractedLinksChannel <- elink
-				}
+		self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
+		elinks := ExtractLinks([]byte(html), link)
+		for _, elink := range elinks {
+			if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
+				self.ExtractedLinksChannel <- elink
 			}
-		}()
-		self.cache = append(self.cache, page)
+		}
 
 		if len(self.cache) > 1000 {
 			self.FlushCache2Disk()
@@ -204,7 +192,6 @@ func NewDownloadHanler() *DownloadHandler {
 	}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.LinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
-	ret.htmlChannel = make(chan *WebPage, DOWNLOADER_QUEUE_SIZE)
 	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
 	ret.signals = make(chan os.Signal, 1)
@@ -216,7 +203,6 @@ func NewDownloadHanler() *DownloadHandler {
 	}()
 	ret.cache = []*WebPage{}
 	go ret.Download()
-	go ret.ExtractLinks()
 	go ret.ProcExtractedLinks()
 	return &ret
 }
@@ -245,9 +231,9 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		ExtractedChannelLength: len(self.ExtractedLinksChannel),
 		CacheSize:              len(self.cache),
 	}
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+".postchannelsize", int64(ret.PostChannelLength), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+".cachesize", int64(ret.CacheSize), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".postchannelsize", int64(ret.PostChannelLength), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(ret.CacheSize), 1.0)
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
 }
