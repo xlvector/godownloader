@@ -49,11 +49,13 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
+	fmt.Println("new request", url)
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", USER_AGENT)
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("do", url)
 	resp, err := self.client.Do(req)
 
 	if err != nil {
