@@ -22,6 +22,26 @@ func ExtractDomain(path string) string {
 	return ret
 }
 
+func ExtractMainDomain(path string) string {
+	tks := strings.Split(path, "/")
+	if len(tks) < 3 {
+		return ""
+	}
+	tks2 := strings.Split(tks[2], ".")
+	if len(tks2) < 3 {
+		return tks[2]
+	} else {
+		ret := tks2[1]
+		for i, tk := range tks2 {
+			if i > 1 {
+				ret += "."
+				ret += tk
+			}
+		}
+		return ret
+	}
+}
+
 func IsValidLink(link string) bool {
 	if len(link) < 8 {
 		return false

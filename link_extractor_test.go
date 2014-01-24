@@ -36,4 +36,12 @@ func TestExtractLinks(t *testing.T) {
 	if ExtractDomain("https://www.sina.com/aaa/bbb") != "https://www.sina.com" {
 		t.Error()
 	}
+
+	if ExtractMainDomain("http://www.sina.com.cn") != "sina.com.cn" {
+		t.Error()
+	}
+
+	if ExtractMainDomain("http://sina.com") != "sina.com" {
+		t.Error()
+	}
 }
