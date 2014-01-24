@@ -110,10 +110,6 @@ type WebPage struct {
 	DownloadedAt int64
 }
 
-func (self *WebPage) ToString() string {
-	return strconv.FormatInt(self.DownloadedAt, 10) + "\t" + self.Link + "\t" + self.Html
-}
-
 type DownloadHandler struct {
 	metricSender          *graphite.Client
 	LinksChannel          chan string
@@ -131,7 +127,19 @@ func (self *DownloadHandler) FlushCache2Disk() {
 	}
 	defer f.Close()
 	for _, page := range self.cache {
-		f.WriteString(page.ToString() + "\n")
+		if !IsUTF8(page.Link) {
+			continue
+		}
+		if !IsUTF8(page.Html) {
+			continue
+		}
+		f.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
+		f.WriteString("\t")
+		f.WriteString(page.Link)
+		f.WriteString("\t")
+		f.WriteString(page.Html)
+		f.WriteString("\n")
+		page = nil
 	}
 	self.cache = []*WebPage{}
 	runtime.GC()
