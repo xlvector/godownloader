@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -52,6 +53,27 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 			DisableKeepAlives:     true,
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
+	}
+	proxyList := GetProxyList()
+	for i := 0; i < 3; i++ {
+		k := rand.Intn(len(proxyList))
+		fmt.Println(proxyList[k])
+		if CheckProxy(proxyList[k]) {
+			proxyUrl, err := url.Parse("http://" + proxyList[k])
+			if err != nil {
+				continue
+			}
+			ret.client = &http.Client{
+				Transport: &http.Transport{
+					Dial:                  dialTimeout,
+					DisableKeepAlives:     true,
+					ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
+					Proxy: http.ProxyURL(proxyUrl),
+				},
+			}
+			fmt.Println("Use proxy ", proxyList[k])
+			break
+		}
 	}
 	return &ret
 }
@@ -146,11 +168,21 @@ func (self *DownloadHandler) FlushCache2Disk() {
 }
 
 func (self *DownloadHandler) Download() {
+	total := 0.0
+	nerr := 0.0
 	for link := range self.LinksChannel {
 		fmt.Println(link)
+		total += 1.0
 		html, err := self.Downloader.Download(link)
 		if err != nil {
 			fmt.Println(err)
+			nerr += 1.0
+		}
+
+		if total > 20.0 && nerr/total > 0.3 {
+			self.Downloader = NewHTTPGetDownloader()
+			total = 0.0
+			nerr = 0.0
 		}
 
 		self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
