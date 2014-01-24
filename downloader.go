@@ -143,11 +143,11 @@ type DownloadHandler struct {
 }
 
 func (self *DownloadHandler) FlushCache2Disk() {
-	f, err := os.Create("./pages/" + strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv")
+	path := strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
+	f, err := os.Create("./tmp/" + path)
 	if err != nil {
 		return
 	}
-	defer f.Close()
 	for _, page := range self.cache {
 		if !IsUTF8(page.Link) {
 			continue
@@ -163,6 +163,8 @@ func (self *DownloadHandler) FlushCache2Disk() {
 		f.WriteString("\n")
 		page = nil
 	}
+	f.Close()
+	os.Rename("./tmp/"+path, "./pages/"+path)
 	self.cache = []*WebPage{}
 	runtime.GC()
 }
