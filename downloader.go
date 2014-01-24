@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -96,7 +97,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 		return "", err
 	} else {
 		fmt.Println("begin", url)
-		if !resp.Header.Get("Content-Type").Contains("text/html") {
+		if !strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
 			return "", errors.New("non html page")
 		}
 		defer resp.Body.Close()
