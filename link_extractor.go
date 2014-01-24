@@ -21,6 +21,9 @@ func ExtractDomain(path string) string {
 }
 
 func IsValidLink(link string) bool {
+	if len(link) < 8 {
+		return false
+	}
 	if len(link) > 255 {
 		return false
 	}
@@ -30,6 +33,14 @@ func IsValidLink(link string) bool {
 		}
 	}
 	return true
+}
+
+func NormalizeLink(link string) string {
+	tks := strings.Split(link, "://")
+	if len(tks) != 2 {
+		return ""
+	}
+	return tks[0] + "://" + strings.Replace(tks[1], "//", "/", -1)
 }
 
 func ConcatLink(root0 string, link0 string) string {

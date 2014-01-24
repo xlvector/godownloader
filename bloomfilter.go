@@ -24,7 +24,7 @@ func Hash(buf string) int32 {
 
 func NewBloomFilter() *BloomFilter {
 	bf := BloomFilter{}
-	bf.size = 8000000
+	bf.size = 100000000
 	bf.h = make([]byte, bf.size)
 
 	for i := int32(0); i < bf.size; i++ {
