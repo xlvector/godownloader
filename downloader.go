@@ -54,27 +54,29 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
-	proxyList := GetProxyList()
-	for i := 0; i < 3; i++ {
-		k := rand.Intn(len(proxyList))
-		fmt.Println(proxyList[k])
-		if CheckProxy(proxyList[k]) {
-			proxyUrl, err := url.Parse("http://" + proxyList[k])
-			if err != nil {
-				continue
+	/*
+		proxyList := GetProxyList()
+		for i := 0; i < 3; i++ {
+			k := rand.Intn(len(proxyList))
+			fmt.Println(proxyList[k])
+			if CheckProxy(proxyList[k]) {
+				proxyUrl, err := url.Parse("http://" + proxyList[k])
+				if err != nil {
+					continue
+				}
+				ret.client = &http.Client{
+					Transport: &http.Transport{
+						Dial:                  dialTimeout,
+						DisableKeepAlives:     true,
+						ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
+						Proxy: http.ProxyURL(proxyUrl),
+					},
+				}
+				fmt.Println("Use proxy ", proxyList[k])
+				break
 			}
-			ret.client = &http.Client{
-				Transport: &http.Transport{
-					Dial:                  dialTimeout,
-					DisableKeepAlives:     true,
-					ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
-					Proxy: http.ProxyURL(proxyUrl),
-				},
-			}
-			fmt.Println("Use proxy ", proxyList[k])
-			break
 		}
-	}
+	*/
 	return &ret
 }
 
