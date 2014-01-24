@@ -12,6 +12,7 @@ import (
 func main() {
 	runtime.GOMAXPROCS(4)
 	port := flag.String("port", "8100", "port number")
+	host := flag.String("host", "127.0.0.1", "host")
 	flag.Parse()
 
 	downloader.Port = *port
@@ -20,7 +21,7 @@ func main() {
 	http.Handle("/redirect", downloader.NewRedirectorHandler())
 
 	s := &http.Server{
-		Addr:           ":" + *port,
+		Addr:           *host + ":" + *port,
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   30 * time.Second,
 		MaxHeaderBytes: 1 << 20,
