@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -97,7 +98,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		fmt.Println(url)
+		log.Println(url)
 		if !strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
 			return "", errors.New("non html page")
 		}
@@ -173,7 +174,8 @@ func (self *DownloadHandler) Download() {
 	for link := range self.LinksChannel {
 		html, err := self.Downloader.Download(link)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
+			continue
 		}
 		if len(html) < 100 {
 			continue
@@ -181,6 +183,8 @@ func (self *DownloadHandler) Download() {
 
 		self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
 		elinks := ExtractLinks([]byte(html), link)
+		log.Println("extract links : ", len(elinks))
+		validElinks := 0
 		for _, elink := range elinks {
 			nlink := NormalizeLink(elink)
 			if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
@@ -228,7 +232,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 				defer resp.Body.Close()
 				ioutil.ReadAll(resp.Body)
 				if err != nil {
-					fmt.Println(err)
+					log.Println(err)
 				}
 			}
 			tm = time.Now().Unix()
@@ -264,7 +268,7 @@ func NewDownloadHanler() *DownloadHandler {
 func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(r)
+			log.Println(r)
 		}
 	}()
 
