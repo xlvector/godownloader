@@ -54,31 +54,32 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
-	proxyList := GetProxyList()
-	if len(proxyList) == 0 {
-		return &ret
-	}
-	for i := 0; i < 3; i++ {
-		k := (int)(time.Now().UnixNano() % int64(len(proxyList)))
-		fmt.Println(proxyList[k])
-		if CheckProxy(proxyList[k]) {
-			proxyUrl, err := url.Parse(proxyList[k])
-			if err != nil {
-				continue
-			}
-			ret.client = &http.Client{
-				Transport: &http.Transport{
-					Dial:                  dialTimeout,
-					DisableKeepAlives:     true,
-					ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
-					Proxy: http.ProxyURL(proxyUrl),
-				},
-			}
-			fmt.Println("Use proxy ", proxyList[k])
-			break
+	/*
+		proxyList := GetProxyList()
+		if len(proxyList) == 0 {
+			return &ret
 		}
-	}
-
+		for i := 0; i < 3; i++ {
+			k := (int)(time.Now().UnixNano() % int64(len(proxyList)))
+			fmt.Println(proxyList[k])
+			if CheckProxy(proxyList[k]) {
+				proxyUrl, err := url.Parse(proxyList[k])
+				if err != nil {
+					continue
+				}
+				ret.client = &http.Client{
+					Transport: &http.Transport{
+						Dial:                  dialTimeout,
+						DisableKeepAlives:     true,
+						ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
+						Proxy: http.ProxyURL(proxyUrl),
+					},
+				}
+				fmt.Println("Use proxy ", proxyList[k])
+				break
+			}
+		}
+	*/
 	return &ret
 }
 
@@ -172,7 +173,6 @@ func (self *DownloadHandler) Download() {
 	total := 0.0
 	nerr := 0.0
 	for link := range self.LinksChannel {
-		fmt.Println(link)
 		total += 1.0
 		html, err := self.Downloader.Download(link)
 		if err != nil {
