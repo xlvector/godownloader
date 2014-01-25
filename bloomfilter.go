@@ -60,7 +60,7 @@ func (self *BloomFilter) Save() {
 
 	for i, val := range self.h {
 		if val == 1 {
-			f.WriteString(strings.Trim(strconv.Itoa(i), "\n") + "\n")
+			f.WriteString(strconv.Itoa(i) + "\n")
 		}
 	}
 }
@@ -79,7 +79,7 @@ func (self *BloomFilter) Load() {
 		if err != nil {
 			break
 		}
-		ha, err := strconv.Atoi(line)
+		ha, err := strconv.Atoi(strings.Trim(line, "\n"))
 		if err != nil {
 			fmt.Println(err)
 		}
