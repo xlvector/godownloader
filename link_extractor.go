@@ -102,6 +102,9 @@ func ConcatLink(root0 string, link0 string) string {
 			}
 		}
 		ret := ""
+		if len(srcTks) < n {
+			return ""
+		}
 		for _, tk := range srcTks[:len(srcTks)-n] {
 			ret += tk
 			ret += "/"
@@ -145,7 +148,10 @@ func ExtractLinks(html []byte, root string) []string {
 			}
 			tmp = append(tmp, ch)
 		}
-		ret = append(ret, ConcatLink(root, string(tmp)))
+		absLink := ConcatLink(root, string(tmp))
+		if IsValidLink(absLink) {
+			ret = append(ret, absLink)
+		}
 	}
 	return ret
 }
