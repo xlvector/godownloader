@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type BloomFilter struct {
@@ -59,7 +60,7 @@ func (self *BloomFilter) Save() {
 
 	for i, val := range self.h {
 		if val == 1 {
-			f.WriteString(strconv.Itoa(i) + "\n")
+			f.WriteString(strings.Trim(strconv.Itoa(i), "\n") + "\n")
 		}
 	}
 }
