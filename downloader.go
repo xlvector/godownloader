@@ -54,29 +54,31 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
-	/*
-		proxyList := GetProxyList()
-		for i := 0; i < 3; i++ {
-			k := rand.Intn(len(proxyList))
-			fmt.Println(proxyList[k])
-			if CheckProxy(proxyList[k]) {
-				proxyUrl, err := url.Parse("http://" + proxyList[k])
-				if err != nil {
-					continue
-				}
-				ret.client = &http.Client{
-					Transport: &http.Transport{
-						Dial:                  dialTimeout,
-						DisableKeepAlives:     true,
-						ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
-						Proxy: http.ProxyURL(proxyUrl),
-					},
-				}
-				fmt.Println("Use proxy ", proxyList[k])
-				break
+	proxyList := GetProxyList()
+	if len(proxyList) == 0 {
+		return &ret
+	}
+	for i := 0; i < 3; i++ {
+		k := (int)(time.Now().UnixNano() % int64(len(proxyList)))
+		fmt.Println(proxyList[k])
+		if CheckProxy(proxyList[k]) {
+			proxyUrl, err := url.Parse("http://" + proxyList[k])
+			if err != nil {
+				continue
 			}
+			ret.client = &http.Client{
+				Transport: &http.Transport{
+					Dial:                  dialTimeout,
+					DisableKeepAlives:     true,
+					ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
+					Proxy: http.ProxyURL(proxyUrl),
+				},
+			}
+			fmt.Println("Use proxy ", proxyList[k])
+			break
 		}
-	*/
+	}
+
 	return &ret
 }
 
@@ -84,25 +86,22 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	if !IsValidLink(url) {
 		return "", nil
 	}
-	fmt.Println("new request", url)
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("User-Agent", USER_AGENT)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("do", url)
 	resp, err := self.client.Do(req)
 
 	if err != nil {
 		return "", err
 	} else {
-		fmt.Println("begin", url)
+		fmt.Println(url)
 		if !strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
 			return "", errors.New("non html page")
 		}
 		defer resp.Body.Close()
 		html, err := ioutil.ReadAll(resp.Body)
-		fmt.Println("readall", url)
 		if err != nil {
 			return "", err
 		} else {
