@@ -184,7 +184,6 @@ func (self *DownloadHandler) Download() {
 		self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
 		elinks := ExtractLinks([]byte(html), link)
 		log.Println("extract links : ", len(elinks))
-		validElinks := 0
 		for _, elink := range elinks {
 			nlink := NormalizeLink(elink)
 			if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
