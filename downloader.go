@@ -89,10 +89,10 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 		return "", nil
 	}
 	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", USER_AGENT)
-	if err != nil {
+	if err != nil || req == nil || req.Header == nil {
 		return "", err
 	}
+	req.Header.Set("User-Agent", USER_AGENT)
 	resp, err := self.client.Do(req)
 
 	if err != nil {
