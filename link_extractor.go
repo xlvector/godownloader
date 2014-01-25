@@ -11,6 +11,7 @@ const (
 	SQUOT = '\''
 	NMARK = '#'
 	QMARK = '?'
+	AND   = '&'
 )
 
 func ExtractDomain(path string) string {
@@ -50,7 +51,7 @@ func IsValidLink(link string) bool {
 		return false
 	}
 	for _, ch := range link {
-		if ch == QMARK || ch == NMARK {
+		if ch == AND || ch == NMARK {
 			return false
 		}
 		if uint8(ch) > 127 {
