@@ -97,6 +97,9 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if !self.Match(link) {
 				continue
 			}
+			if self.processedLinks.Contains(link) {
+				continue
+			}
 			ci := Hash(ExtractMainDomain(link)) % int32(ConfigInstance().RedirectChanNum)
 			fmt.Println("channel length", ci, len(self.linksChannel[ci]))
 			if len(self.linksChannel[ci]) < REDIRECTOR_QUEUE_SIZE {
