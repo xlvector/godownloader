@@ -229,11 +229,12 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 				post := url.Values{}
 				post.Set("links", string(jsonBlob))
 				resp, err := http.PostForm(ConfigInstance().RedirectorHost, post)
-				defer resp.Body.Close()
-				ioutil.ReadAll(resp.Body)
+
 				if err != nil {
 					log.Println(err)
 				}
+				ioutil.ReadAll(resp.Body)
+				resp.Body.Close()
 			}
 			tm = time.Now().Unix()
 			lm = make(map[string]bool)
