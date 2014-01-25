@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -41,7 +43,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 		}
 		self.processedLinks.Add(link)
 
-		fmt.Println(link)
+		log.Println("redirect : ", link)
 
 		pb := PostBody{}
 		pb.Links = []string{link}
@@ -52,7 +54,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 
 			resp, err := http.PostForm(ConfigInstance().DownloaderHost, post)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			defer resp.Body.Close()
@@ -84,7 +86,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(r)
+			log.Println(r)
 		}
 	}()
 
@@ -100,9 +102,12 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if self.processedLinks.Contains(link) {
 				continue
 			}
+			if rand.Float64() < 0.5 {
+				continue
+			}
 			ci := Hash(ExtractMainDomain(link)) % int32(ConfigInstance().RedirectChanNum)
-			fmt.Println("channel length", ci, len(self.linksChannel[ci]))
 			if len(self.linksChannel[ci]) < REDIRECTOR_QUEUE_SIZE {
+				log.Println("channel ", ci, " recv link : ", link)
 				self.linksChannel[ci] <- link
 			}
 		}

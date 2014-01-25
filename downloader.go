@@ -218,6 +218,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 		tm1 := time.Now().Unix()
 
 		if tm1-tm > 60 || len(lm) > 100 || procn < 10 {
+			log.Println("send links : ", len(lm))
 			pb := PostBody{}
 			pb.Links = []string{}
 			for lk, _ := range lm {
