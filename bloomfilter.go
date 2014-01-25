@@ -44,6 +44,7 @@ func NewBloomFilter() *BloomFilter {
 	go func() {
 		for sg := range bf.saveChan {
 			bf.Save()
+			fmt.Println("sg", sg)
 		}
 	}()
 	return &bf
