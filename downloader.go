@@ -170,20 +170,13 @@ func (self *DownloadHandler) FlushCache2Disk() {
 }
 
 func (self *DownloadHandler) Download() {
-	total := 0.0
-	nerr := 0.0
 	for link := range self.LinksChannel {
-		total += 1.0
 		html, err := self.Downloader.Download(link)
 		if err != nil {
 			fmt.Println(err)
-			nerr += 1.0
 		}
-
-		if total > 20.0 && nerr/total > 0.3 {
-			self.Downloader = NewHTTPGetDownloader()
-			total = 0.0
-			nerr = 0.0
+		if len(html) < 100 {
+			continue
 		}
 
 		self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
