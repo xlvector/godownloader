@@ -8,9 +8,10 @@ import (
 )
 
 type BloomFilter struct {
-	h    []byte
-	size int32
-	hit  int64
+	h        []byte
+	size     int32
+	hit      int64
+	saveChan chan int
 }
 
 func Hash(buf string) int32 {
@@ -39,6 +40,12 @@ func NewBloomFilter() *BloomFilter {
 		bf.h[i] = 0
 	}
 	bf.Load()
+	bf.saveChan = make(chan int, 10)
+	go func() {
+		for sg := range bf.saveChan {
+			bf.Save()
+		}
+	}()
 	return &bf
 }
 
@@ -92,8 +99,8 @@ func (self *BloomFilter) Add(buf string) {
 
 func (self *BloomFilter) Contains(buf string) bool {
 	self.hit += 1
-	if self.hit%1000 == 0 {
-		self.Save()
+	if self.hit%10000 == 0 {
+		self.saveChan <- 1
 	}
 	ha := Hash(buf)
 	if self.h[ha%self.size] == 1 {
