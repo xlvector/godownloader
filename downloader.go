@@ -62,7 +62,7 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 		k := (int)(time.Now().UnixNano() % int64(len(proxyList)))
 		fmt.Println(proxyList[k])
 		if CheckProxy(proxyList[k]) {
-			proxyUrl, err := url.Parse("http://" + proxyList[k])
+			proxyUrl, err := url.Parse(proxyList[k])
 			if err != nil {
 				continue
 			}
