@@ -57,9 +57,11 @@ func (self *RedirectorHandler) Redirect(ci int) {
 				log.Println(err)
 				continue
 			}
-			defer resp.Body.Close()
-			ioutil.ReadAll(resp.Body)
 
+			if resp != nil && resp.Body != nil {
+				ioutil.ReadAll(resp.Body)
+				resp.Body.Close()
+			}
 		}
 		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
 	}

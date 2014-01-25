@@ -233,8 +233,10 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 				if err != nil {
 					log.Println(err)
 				}
-				ioutil.ReadAll(resp.Body)
-				resp.Body.Close()
+				if resp != nil && resp.Body != nil {
+					ioutil.ReadAll(resp.Body)
+					resp.Body.Close()
+				}
 			}
 			tm = time.Now().Unix()
 			lm = make(map[string]bool)
