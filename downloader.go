@@ -110,9 +110,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 			if utf8Html == nil {
 				return "", errors.New("conver to utf8 error")
 			}
-			fmt.Println("utf8 finish", url)
 			cleanHtml := self.cleaner.CleanHTML(utf8Html)
-			fmt.Println("clean finish", url)
 			return string(cleanHtml), nil
 		}
 	}
