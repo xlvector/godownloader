@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -187,7 +186,6 @@ func (self *DownloadHandler) FlushPages() {
 
 func (self *DownloadHandler) Download() {
 	self.flushFileSize = 0
-	rand.Seed(time.Now().UnixNano())
 	for link := range self.LinksChannel {
 		go func() {
 			self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
@@ -201,19 +199,11 @@ func (self *DownloadHandler) Download() {
 			}
 
 			elinks := ExtractLinks([]byte(html), link)
-			mlinks := []string{}
+			log.Println("extract links : ", len(elinks))
 			for _, elink := range elinks {
 				nlink := NormalizeLink(elink)
-				if self.Match(nlink) && IsValidLink(nlink) {
-					mlinks = append(mlinks, nlink)
-				}
-			}
-			elinks = nil
-			log.Println("extract matched links : ", len(mlinks))
-			for i := 0; i < len(elinks) && i < 10; i++ {
-				link := mlinks[rand.Intn(len(mlinks))]
-				if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-					self.ExtractedLinksChannel <- link
+				if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) {
+					self.ExtractedLinksChannel <- nlink
 				}
 			}
 			page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
