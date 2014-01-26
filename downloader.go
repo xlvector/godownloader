@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -22,7 +21,7 @@ import (
 
 const (
 	USER_AGENT            = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31"
-	DOWNLOADER_QUEUE_SIZE = 1000
+	DOWNLOADER_QUEUE_SIZE = 512
 )
 
 type Downloader interface {
@@ -55,6 +54,7 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
+
 	/*
 		proxyList := GetProxyList()
 		if len(proxyList) == 0 {
@@ -138,39 +138,30 @@ type DownloadHandler struct {
 	LinksChannel          chan string
 	Downloader            *HTTPGetDownloader
 	signals               chan os.Signal
-	cache                 []*WebPage
 	ExtractedLinksChannel chan string
 	patterns              []*regexp.Regexp
+	writer                *os.File
+	currentPath           string
+	flushFileSize         int
 }
 
-func (self *DownloadHandler) FlushCache2Disk() {
-	path := strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
-	f, err := os.Create("./tmp/" + path)
-	if err != nil {
+func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
+	if !IsUTF8(page.Link) {
 		return
 	}
-	for _, page := range self.cache {
-		if !IsUTF8(page.Link) {
-			continue
-		}
-		if !IsUTF8(page.Html) {
-			continue
-		}
-		f.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
-		f.WriteString("\t")
-		f.WriteString(page.Link)
-		f.WriteString("\t")
-		f.WriteString(page.Html)
-		f.WriteString("\n")
-		page = nil
+	if !IsUTF8(page.Html) {
+		return
 	}
-	f.Close()
-	os.Rename("./tmp/"+path, "./pages/"+path)
-	self.cache = []*WebPage{}
-	runtime.GC()
+	self.writer.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
+	self.writer.WriteString("\t")
+	self.writer.WriteString(page.Link)
+	self.writer.WriteString("\t")
+	self.writer.WriteString(page.Html)
+	self.writer.WriteString("\n")
 }
 
 func (self *DownloadHandler) Download() {
+	self.flushFileSize = 0
 	for link := range self.LinksChannel {
 		html, err := self.Downloader.Download(link)
 		if err != nil {
@@ -181,7 +172,6 @@ func (self *DownloadHandler) Download() {
 			continue
 		}
 
-		self.cache = append(self.cache, &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}))
 		elinks := ExtractLinks([]byte(html), link)
 		log.Println("extract links : ", len(elinks))
 		for _, elink := range elinks {
@@ -190,9 +180,17 @@ func (self *DownloadHandler) Download() {
 				self.ExtractedLinksChannel <- nlink
 			}
 		}
-
-		if len(self.cache) > 200 {
-			self.FlushCache2Disk()
+		self.flushFileSize += 1
+		if self.flushFileSize%200 == 0 {
+			self.writer.Close()
+			os.Rename("./tmp/"+self.currentPath, "./pages/"+self.currentPath)
+			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
+			self.writer, err = os.Create("./tmp/" + self.currentPath)
+			if err == nil {
+				log.Println(err)
+				os.Exit(0)
+			}
+			self.flushFileSize = 0
 		}
 	}
 }
@@ -251,6 +249,13 @@ func NewDownloadHanler() *DownloadHandler {
 		re := regexp.MustCompile(pt)
 		ret.patterns = append(ret.patterns, re)
 	}
+	var err error
+	ret.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
+	ret.writer, err = os.Create("./tmp/" + ret.currentPath)
+	if err == nil {
+		log.Println(err)
+		os.Exit(0)
+	}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.LinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
@@ -259,10 +264,10 @@ func NewDownloadHanler() *DownloadHandler {
 	signal.Notify(ret.signals, syscall.SIGINT)
 	go func() {
 		<-ret.signals
-		ret.FlushCache2Disk()
+		ret.writer.Close()
+		os.Rename("./tmp/"+ret.currentPath, "./pages/"+ret.currentPath)
 		os.Exit(0)
 	}()
-	ret.cache = []*WebPage{}
 	go ret.Download()
 	go ret.ProcExtractedLinks()
 	return &ret
@@ -290,11 +295,10 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 	ret := Response{
 		PostChannelLength:      len(self.LinksChannel),
 		ExtractedChannelLength: len(self.ExtractedLinksChannel),
-		CacheSize:              len(self.cache),
 	}
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".postchannelsize", int64(ret.PostChannelLength), 1.0)
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(ret.CacheSize), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(self.flushFileSize), 1.0)
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
 }
