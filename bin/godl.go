@@ -12,12 +12,17 @@ import (
 func main() {
 	runtime.GOMAXPROCS(4)
 	port := flag.String("port", "8100", "port number")
+	mode := flag.String("mode", "download", "mode")
 	flag.Parse()
 
 	downloader.Port = *port
 
-	http.Handle("/download", downloader.NewDownloadHanler())
-	http.Handle("/redirect", downloader.NewRedirectorHandler())
+	if *mode == "download" {
+		http.Handle("/download", downloader.NewDownloadHanler())
+	}
+	if *mode == "redirect" {
+		http.Handle("/redirect", downloader.NewRedirectorHandler())
+	}
 
 	s := &http.Server{
 		Addr:           ":" + *port,
