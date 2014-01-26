@@ -139,13 +139,14 @@ type DownloadHandler struct {
 	Downloader            *HTTPGetDownloader
 	signals               chan os.Signal
 	ExtractedLinksChannel chan string
+	PageChannel           chan *WebPage
 	patterns              []*regexp.Regexp
 	writer                *os.File
 	currentPath           string
 	flushFileSize         int
 }
 
-func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
+func (self *DownloadHandler) WritePage(page *WebPage) {
 	if !IsUTF8(page.Link) {
 		return
 	}
@@ -160,36 +161,19 @@ func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
 	self.writer.WriteString(page.Html)
 	self.writer.WriteString("\n")
 	page.Html = ""
+	page = nil
 }
 
-func (self *DownloadHandler) Download() {
-	self.flushFileSize = 0
-	for link := range self.LinksChannel {
-		self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
-		html, err := self.Downloader.Download(link)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		if len(html) < 100 {
-			continue
-		}
-
-		elinks := ExtractLinks([]byte(html), link)
-		log.Println("extract links : ", len(elinks))
-		for _, elink := range elinks {
-			nlink := NormalizeLink(elink)
-			if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-				self.ExtractedLinksChannel <- nlink
-			}
-		}
-		page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
-		self.FlushCache2Disk(page)
+func (self *DownloadHandler) FlushPages() {
+	for page := range self.PageChannel {
+		self.WritePage(page)
 		self.flushFileSize += 1
+
 		if self.flushFileSize%ConfigInstance().WritePageFreq == 0 {
 			self.writer.Close()
 			os.Rename("./tmp/"+self.currentPath, "./pages/"+self.currentPath)
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
+			var err error
 			self.writer, err = os.Create("./tmp/" + self.currentPath)
 			if err != nil {
 				log.Println(err)
@@ -197,6 +181,36 @@ func (self *DownloadHandler) Download() {
 			}
 			self.flushFileSize = 0
 		}
+	}
+}
+
+func (self *DownloadHandler) Download() {
+	self.flushFileSize = 0
+	for link := range self.LinksChannel {
+		go func() {
+			self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
+			html, err := self.Downloader.Download(link)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			if len(html) < 100 {
+				return
+			}
+
+			elinks := ExtractLinks([]byte(html), link)
+			log.Println("extract links : ", len(elinks))
+			for _, elink := range elinks {
+				nlink := NormalizeLink(elink)
+				if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
+					self.ExtractedLinksChannel <- nlink
+				}
+			}
+			page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
+			self.PageChannel <- page
+
+		}()
+
 	}
 }
 
@@ -263,6 +277,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.LinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
+	ret.PageChannel = make(chan *WebPage, DOWNLOADER_QUEUE_SIZE)
 	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
 	ret.signals = make(chan os.Signal, 1)
@@ -275,6 +290,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}()
 	go ret.Download()
 	go ret.ProcExtractedLinks()
+	go ret.FlushPages()
 	return &ret
 }
 
