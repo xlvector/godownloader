@@ -186,7 +186,7 @@ func (self *DownloadHandler) Download() {
 			os.Rename("./tmp/"+self.currentPath, "./pages/"+self.currentPath)
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 			self.writer, err = os.Create("./tmp/" + self.currentPath)
-			if err == nil {
+			if err != nil {
 				log.Println(err)
 				os.Exit(0)
 			}
@@ -252,7 +252,7 @@ func NewDownloadHanler() *DownloadHandler {
 	var err error
 	ret.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 	ret.writer, err = os.Create("./tmp/" + ret.currentPath)
-	if err == nil {
+	if err != nil {
 		log.Println(err)
 		os.Exit(0)
 	}
