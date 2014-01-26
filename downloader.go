@@ -189,7 +189,7 @@ func (self *DownloadHandler) Download() {
 	self.flushFileSize = 0
 	for link := range self.LinksChannel {
 		go func() {
-			log.Println("begin : ", url)
+			log.Println("begin : ", link)
 			self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
 			html, err := self.Downloader.Download(link)
 			if err != nil {
