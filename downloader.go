@@ -322,7 +322,7 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".postchannelsize", int64(ret.PostChannelLength), 1.0)
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(self.flushFileSize), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".pagechannelsize", int64(self.PageChannel), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".pagechannelsize", int64(len(self.PageChannel)), 1.0)
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
 }
