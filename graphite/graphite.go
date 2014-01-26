@@ -63,7 +63,7 @@ func (s *Client) Gauge(stat string, value int64, rate float32) error {
 // value is the (positive or negative) change.
 // rate is the sample rate (0.0 to 1.0).
 func (s *Client) GaugeDelta(stat string, value int64, rate float32) error {
-	dap := fmt.Sprintf("+%d|g", value)
+	dap := fmt.Sprintf("%+d|g", value)
 	return s.submit(stat, dap, rate)
 }
 

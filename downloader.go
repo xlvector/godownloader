@@ -152,7 +152,7 @@ func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
 	if !IsUTF8(page.Html) {
 		return
 	}
-	self.metricSender.GaugeDelta("crawler.downloader.savepagecount", 1, 1.0)
+	self.metricSender.Inc("crawler.downloader.savepagecount", 1, 1.0)
 	self.writer.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.Link)
@@ -165,7 +165,7 @@ func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
 func (self *DownloadHandler) Download() {
 	self.flushFileSize = 0
 	for link := range self.LinksChannel {
-		self.metricSender.GaugeDelta("crawler.downloader.trytodownloadcount", 1, 1.0)
+		self.metricSender.Inc("crawler.downloader.trytodownloadcount", 1, 1.0)
 		html, err := self.Downloader.Download(link)
 		if err != nil {
 			log.Println(err)
