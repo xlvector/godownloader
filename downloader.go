@@ -165,6 +165,7 @@ func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
 func (self *DownloadHandler) Download() {
 	self.flushFileSize = 0
 	for link := range self.LinksChannel {
+		self.metricSender.Inc("crawler.downloader.trytodownloadcount", 1, 1.0)
 		html, err := self.Downloader.Download(link)
 		if err != nil {
 			log.Println(err)
