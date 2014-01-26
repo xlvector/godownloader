@@ -13,10 +13,6 @@ import (
 	"time"
 )
 
-const (
-	REDIRECTOR_QUEUE_SIZE = 20000
-)
-
 type RedirectorHandler struct {
 	metricSender   *graphite.Client
 	processedLinks *BloomFilter
@@ -108,7 +104,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 				continue
 			}
 			ci := Hash(ExtractMainDomain(link)) % int32(ConfigInstance().RedirectChanNum)
-			if len(self.linksChannel[ci]) < REDIRECTOR_QUEUE_SIZE {
+			if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 				log.Println("channel ", ci, " recv link : ", link)
 				self.linksChannel[ci] <- link
 			}
