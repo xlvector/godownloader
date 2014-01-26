@@ -158,6 +158,7 @@ func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.Html)
 	self.writer.WriteString("\n")
+	page.Html = ""
 }
 
 func (self *DownloadHandler) Download() {
@@ -180,6 +181,8 @@ func (self *DownloadHandler) Download() {
 				self.ExtractedLinksChannel <- nlink
 			}
 		}
+		page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
+		self.FlushCache2Disk(page)
 		self.flushFileSize += 1
 		if self.flushFileSize%200 == 0 {
 			self.writer.Close()
