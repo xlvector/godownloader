@@ -88,6 +88,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	if !IsValidLink(url) {
 		return "", nil
 	}
+	log.Println("download : ", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
 		return "", err
@@ -98,7 +99,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	if err != nil {
 		return "", err
 	} else {
-		log.Println(url)
+
 		if !strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
 			return "", errors.New("non html page")
 		}
@@ -188,6 +189,7 @@ func (self *DownloadHandler) Download() {
 	self.flushFileSize = 0
 	for link := range self.LinksChannel {
 		go func() {
+			log.Println("begin : ", url)
 			self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
 			html, err := self.Downloader.Download(link)
 			if err != nil {
