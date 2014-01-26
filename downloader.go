@@ -184,7 +184,7 @@ func (self *DownloadHandler) Download() {
 		page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
 		self.FlushCache2Disk(page)
 		self.flushFileSize += 1
-		if self.flushFileSize%200 == 0 {
+		if self.flushFileSize%ConfigInstance().WritePageFreq == 0 {
 			self.writer.Close()
 			os.Rename("./tmp/"+self.currentPath, "./pages/"+self.currentPath)
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"

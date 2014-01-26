@@ -16,6 +16,7 @@ type Config struct {
 	DownloadTimeout  int64    `json:"download_timeout"`
 	RedirectChanNum  int      `json:"redirect_chan_num"`
 	RedirectChanSize int      `json:"redirect_chan_size"`
+	WritePageFreq    int      `json:"write_page_freq"`
 }
 
 func NewDefaultConfig() *Config {
