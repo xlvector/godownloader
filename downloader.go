@@ -152,6 +152,7 @@ func (self *DownloadHandler) FlushCache2Disk(page *WebPage) {
 	if !IsUTF8(page.Html) {
 		return
 	}
+	self.metricSender.Inc("crawler.downloader.savepagecount", 1, 1.0)
 	self.writer.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.Link)
