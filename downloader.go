@@ -96,7 +96,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	req.Header.Set("User-Agent", USER_AGENT)
 	resp, err := self.client.Do(req)
 
-	if err != nil {
+	if err != nil || resp == nil || resp.Body == nil {
 		return "", err
 	} else {
 
@@ -171,7 +171,7 @@ func (self *DownloadHandler) FlushPages() {
 		self.flushFileSize += 1
 
 		if self.flushFileSize%ConfigInstance().WritePageFreq == 0 {
-			self.writer.Close()
+			defer self.writer.Close()
 			os.Rename("./tmp/"+self.currentPath, "./pages/"+self.currentPath)
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 			var err error
@@ -212,7 +212,6 @@ func (self *DownloadHandler) Download() {
 			if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
 				self.PageChannel <- page
 			}
-
 		}()
 
 	}
@@ -252,8 +251,8 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 					log.Println(err)
 				}
 				if resp != nil && resp.Body != nil {
+					defer resp.Body.Close()
 					ioutil.ReadAll(resp.Body)
-					resp.Body.Close()
 				}
 			}
 			tm = time.Now().Unix()
@@ -285,7 +284,7 @@ func NewDownloadHanler() *DownloadHandler {
 	signal.Notify(ret.signals, syscall.SIGINT)
 	go func() {
 		<-ret.signals
-		ret.writer.Close()
+		defer ret.writer.Close()
 		os.Rename("./tmp/"+ret.currentPath, "./pages/"+ret.currentPath)
 		os.Exit(0)
 	}()
