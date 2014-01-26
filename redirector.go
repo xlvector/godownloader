@@ -68,7 +68,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.linksChannel = []chan string{}
 	for i := 0; i < ConfigInstance().RedirectChanNum; i++ {
-		ret.linksChannel = append(ret.linksChannel, make(chan string, REDIRECTOR_QUEUE_SIZE))
+		ret.linksChannel = append(ret.linksChannel, make(chan string, ConfigInstance().RedirectChanSize))
 	}
 	ret.processedLinks = NewBloomFilter()
 	for _, pt := range ConfigInstance().SitePatterns {
