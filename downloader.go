@@ -201,12 +201,19 @@ func (self *DownloadHandler) Download() {
 			}
 
 			elinks := ExtractLinks([]byte(html), link)
-			log.Println("extract links : ", len(elinks))
-			for i := 0; i*2 < len(elinks); i++ {
-				elink := elinks[rand.Intn(len(elinks))]
+			mlinks := []string{}
+			for _, elink := range elinks {
 				nlink := NormalizeLink(elink)
-				if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) {
-					self.ExtractedLinksChannel <- nlink
+				if self.Match(nlink) && IsValidLink(nlink) {
+					mlinks = append(mlinks, nlink)
+				}
+			}
+			elinks = nil
+			log.Println("extract matched links : ", len(mlinks))
+			for i := 0; i < len(elinks) && i < 10; i++ {
+				link := mlinks[rand.Intn(len(mlinks))]
+				if len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
+					self.ExtractedLinksChannel <- link
 				}
 			}
 			page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
