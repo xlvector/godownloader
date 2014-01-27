@@ -77,7 +77,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	}
 	ret.processedLinks = NewBloomFilter()
 	ret.urlFilter = NewURLFilter()
-	for i := 0; i < ConfigInstance().RedirectChanNum; i++ {
+	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
 		go ret.Redirect(i)
 	}
 	return &ret
