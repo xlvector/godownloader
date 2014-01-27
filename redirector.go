@@ -103,7 +103,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if self.processedLinks.Contains(link) {
 				continue
 			}
-			if rand.Float64() < 0.5 {
+			if rand.Float64() < 0.5 && priority == 1 {
 				continue
 			}
 			ci := Hash(ExtractMainDomain(link)) % int32(ConfigInstance().RedirectChanNum)
