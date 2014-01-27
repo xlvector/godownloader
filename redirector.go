@@ -18,6 +18,7 @@ type RedirectorHandler struct {
 	processedLinks *BloomFilter
 	linksChannel   []chan string
 	patterns       []*regexp.Regexp
+	dnsCache       map[string]string
 }
 
 func (self *RedirectorHandler) Match(link string) bool {
@@ -27,6 +28,16 @@ func (self *RedirectorHandler) Match(link string) bool {
 		}
 	}
 	return false
+}
+
+func (self *RedirectorHandler) GetIP(host string) string {
+	ip, ok := self.dnsCache[host]
+	if ok {
+		return ip
+	}
+	ip = LoopUpIp(host)
+	log.Println("dns lookup", host, ip)
+	return ip
 }
 
 func (self *RedirectorHandler) Redirect(ci int) {
@@ -103,7 +114,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if rand.Float64() < 0.5 {
 				continue
 			}
-			ci := Hash(ExtractMainDomain(link)) % int32(ConfigInstance().RedirectChanNum)
+			ci := Hash(self.GetIP(ExtractDomain(link))) % int32(ConfigInstance().RedirectChanNum)
 			if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 				log.Println("channel ", ci, " recv link : ", link)
 				self.linksChannel[ci] <- link

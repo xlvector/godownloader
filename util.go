@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"net"
 	"os"
 	"strings"
 )
@@ -32,4 +33,15 @@ func IsUTF8(buf string) bool {
 		}
 	}
 	return true
+}
+
+func LoopUpIp(host string) string {
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return ""
+	}
+	for _, ip := range ips {
+		return string(ip)
+	}
+	return ""
 }
