@@ -97,7 +97,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 
 		for _, link := range pb.Links {
 			priority := self.Match(link)
-			if pripority <= 0 {
+			if priority <= 0 {
 				continue
 			}
 			if self.processedLinks.Contains(link) {
