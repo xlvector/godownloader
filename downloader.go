@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -56,32 +55,6 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 		},
 	}
 
-	/*
-		proxyList := GetProxyList()
-		if len(proxyList) == 0 {
-			return &ret
-		}
-		for i := 0; i < 3; i++ {
-			k := (int)(time.Now().UnixNano() % int64(len(proxyList)))
-			fmt.Println(proxyList[k])
-			if CheckProxy(proxyList[k]) {
-				proxyUrl, err := url.Parse(proxyList[k])
-				if err != nil {
-					continue
-				}
-				ret.client = &http.Client{
-					Transport: &http.Transport{
-						Dial:                  dialTimeout,
-						DisableKeepAlives:     true,
-						ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
-						Proxy: http.ProxyURL(proxyUrl),
-					},
-				}
-				fmt.Println("Use proxy ", proxyList[k])
-				break
-			}
-		}
-	*/
 	return &ret
 }
 
@@ -142,7 +115,7 @@ type DownloadHandler struct {
 	signals               chan os.Signal
 	ExtractedLinksChannel chan string
 	PageChannel           chan *WebPage
-	patterns              []*regexp.Regexp
+	urlFilter             *URLFilter
 	writer                *os.File
 	currentPath           string
 	flushFileSize         int
@@ -206,7 +179,13 @@ func (self *DownloadHandler) Download() {
 			log.Println("extract links : ", len(elinks))
 			for _, elink := range elinks {
 				nlink := NormalizeLink(elink)
-				if rand.Float64() < 0.5 && IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) {
+				if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 2 {
+					self.ExtractedLinksChannel <- nlink
+				}
+			}
+			for _, elink := range elinks {
+				nlink := NormalizeLink(elink)
+				if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 1 && rand.Float64() < 0.3 {
 					self.ExtractedLinksChannel <- nlink
 				}
 			}
@@ -219,13 +198,8 @@ func (self *DownloadHandler) Download() {
 	}
 }
 
-func (self *DownloadHandler) Match(link string) bool {
-	for _, pt := range self.patterns {
-		if pt.FindString(link) == link {
-			return true
-		}
-	}
-	return false
+func (self *DownloadHandler) Match(link string) int {
+	return self.urlFilter.Match(link)
 }
 
 func (self *DownloadHandler) ProcExtractedLinks() {
@@ -266,10 +240,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 
 func NewDownloadHanler() *DownloadHandler {
 	ret := DownloadHandler{}
-	for _, pt := range ConfigInstance().SitePatterns {
-		re := regexp.MustCompile(pt)
-		ret.patterns = append(ret.patterns, re)
-	}
+	ret.urlFilter = NewURLFilter()
 	var err error
 	ret.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 	ret.writer, err = os.Create("./tmp/" + ret.currentPath)

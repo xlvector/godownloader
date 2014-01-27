@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"regexp"
 	"time"
 )
 
@@ -17,17 +16,12 @@ type RedirectorHandler struct {
 	metricSender   *graphite.Client
 	processedLinks *BloomFilter
 	linksChannel   []chan string
-	patterns       []*regexp.Regexp
+	urlFilter      *URLFilter
 	dnsCache       map[string]string
 }
 
-func (self *RedirectorHandler) Match(link string) bool {
-	for _, pt := range self.patterns {
-		if pt.FindString(link) == link {
-			return true
-		}
-	}
-	return false
+func (self *RedirectorHandler) Match(link string) int {
+	return self.urlFilter.Match(link)
 }
 
 func (self *RedirectorHandler) GetIP(host string) string {
@@ -45,9 +39,6 @@ func (self *RedirectorHandler) GetIP(host string) string {
 
 func (self *RedirectorHandler) Redirect(ci int) {
 	for link := range self.linksChannel[ci] {
-		if !self.Match(link) {
-			continue
-		}
 		if self.processedLinks.Contains(link) {
 			continue
 		}
@@ -85,10 +76,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 		ret.linksChannel = append(ret.linksChannel, make(chan string, ConfigInstance().RedirectChanSize))
 	}
 	ret.processedLinks = NewBloomFilter()
-	for _, pt := range ConfigInstance().SitePatterns {
-		re := regexp.MustCompile(pt)
-		ret.patterns = append(ret.patterns, re)
-	}
+	ret.urlFilter = NewURLFilter()
 	for i := 0; i < ConfigInstance().RedirectChanNum; i++ {
 		go ret.Redirect(i)
 	}
@@ -108,7 +96,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			if !self.Match(link) {
+			if self.Match(link) <= 0 {
 				continue
 			}
 			if self.processedLinks.Contains(link) {
