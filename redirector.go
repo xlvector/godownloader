@@ -100,9 +100,6 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if pripority <= 0 {
 				continue
 			}
-			if len(self.linksChannel[ci]) > 100 && priority == 1 {
-				continue
-			}
 			if self.processedLinks.Contains(link) {
 				continue
 			}
