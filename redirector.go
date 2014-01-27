@@ -45,6 +45,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 		self.processedLinks.Add(link)
 
 		log.Println("redirect : ", link)
+		self.metricSender.Inc("crawler.redirector.redirect_link_count", 1, 1.0)
 
 		pb := PostBody{}
 		pb.Links = []string{link}
