@@ -96,7 +96,11 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			if self.Match(link) <= 0 {
+			priority := self.Match(link)
+			if pripority <= 0 {
+				continue
+			}
+			if len(self.linksChannel[ci]) > 100 && priority == 1 {
 				continue
 			}
 			if self.processedLinks.Contains(link) {
