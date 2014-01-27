@@ -174,6 +174,10 @@ func (self *DownloadHandler) Download() {
 			if len(html) < 100 {
 				return
 			}
+			page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
+			if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
+				self.PageChannel <- page
+			}
 
 			elinks := ExtractLinks([]byte(html), link)
 			log.Println("extract links : ", len(elinks))
@@ -189,10 +193,7 @@ func (self *DownloadHandler) Download() {
 					self.ExtractedLinksChannel <- nlink
 				}
 			}
-			page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
-			if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
-				self.PageChannel <- page
-			}
+
 		}()
 
 	}
