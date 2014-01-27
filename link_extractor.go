@@ -32,12 +32,9 @@ func ExtractMainDomain(path string) string {
 	if len(tks2) < 3 {
 		return tks[2]
 	} else {
-		ret := tks2[1]
-		for i, tk := range tks2 {
-			if i > 1 {
-				ret += "."
-				ret += tk
-			}
+		ret := tks2[len(tks2)-2] + "." + tks2[len(tks2)-1]
+		if ret == "com.cn" || ret == "org.cn" || ret == "net.cn" {
+			ret = tks2[len(tks2)-3] + "." + ret
 		}
 		return ret
 	}
