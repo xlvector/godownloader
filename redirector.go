@@ -36,6 +36,9 @@ func (self *RedirectorHandler) GetIP(host string) string {
 		return ip
 	}
 	ip = LoopUpIp(host)
+	if ip == "" {
+		ip = host
+	}
 	log.Println("dns lookup", host, ip)
 	return ip
 }
@@ -114,7 +117,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if rand.Float64() < 0.5 {
 				continue
 			}
-			ci := Hash(self.GetIP(ExtractDomain(link))) % int32(ConfigInstance().RedirectChanNum)
+			ci := Hash(self.GetIP(ExtractMainDomain(link))) % int32(ConfigInstance().RedirectChanNum)
 			if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 				log.Println("channel ", ci, " recv link : ", link)
 				self.linksChannel[ci] <- link
