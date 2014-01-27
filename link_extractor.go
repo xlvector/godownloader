@@ -33,7 +33,7 @@ func ExtractMainDomain(path string) string {
 		return tks[2]
 	} else {
 		ret := tks2[len(tks2)-2] + "." + tks2[len(tks2)-1]
-		if ret == "com.cn" || ret == "org.cn" || ret == "net.cn" {
+		if ret == "com.cn" || ret == "org.cn" || ret == "net.cn" || ret == "edu.cn" {
 			ret = tks2[len(tks2)-3] + "." + ret
 		}
 		return ret
