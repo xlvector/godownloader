@@ -72,7 +72,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret := RedirectorHandler{}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.linksChannel = []chan string{}
-	for i := 0; i < ConfigInstance().RedirectChanNum; i++ {
+	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
 		ret.linksChannel = append(ret.linksChannel, make(chan string, ConfigInstance().RedirectChanSize))
 	}
 	ret.processedLinks = NewBloomFilter()
@@ -106,7 +106,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if rand.Float64() < 0.5 && priority == 1 {
 				continue
 			}
-			ci := Hash(ExtractMainDomain(link)) % int32(ConfigInstance().RedirectChanNum)
+			ci := Hash(ExtractMainDomain(link))%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 			if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 				log.Println("channel ", ci, " recv link : ", link)
 				self.linksChannel[ci] <- link
