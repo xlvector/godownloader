@@ -5,13 +5,14 @@ import (
 )
 
 const (
-	SPACE = ' '
-	GT    = '>'
-	QUOT  = '"'
-	SQUOT = '\''
-	NMARK = '#'
-	QMARK = '?'
-	AND   = '&'
+	SPACE     = ' '
+	GT        = '>'
+	QUOT      = '"'
+	SEMICOLON = ';'
+	SQUOT     = '\''
+	NMARK     = '#'
+	QMARK     = '?'
+	AND       = '&'
 )
 
 func ExtractDomain(path string) string {
@@ -48,7 +49,7 @@ func IsValidLink(link string) bool {
 		return false
 	}
 	for _, ch := range link {
-		if ch == AND || ch == NMARK {
+		if ch == AND || ch == NMARK || ch == SEMICOLON {
 			return false
 		}
 		if uint8(ch) > 127 {
@@ -141,7 +142,7 @@ func ExtractLinks(html []byte, root string) []string {
 			if i == k+5 && (ch == SQUOT || ch == QUOT) {
 				continue
 			}
-			if i > k+5 && (ch == SPACE || ch == QUOT || ch == SQUOT || ch == GT) {
+			if i > k+5 && (ch == SPACE || ch == QUOT || ch == SQUOT || ch == GT || ch == NMARK) {
 				break
 			}
 			tmp = append(tmp, ch)
