@@ -114,14 +114,14 @@ type DownloadHandler struct {
 	Downloader            *HTTPGetDownloader
 	signals               chan os.Signal
 	ExtractedLinksChannel chan string
-	PageChannel           chan *WebPage
+	PageChannel           chan WebPage
 	urlFilter             *URLFilter
 	writer                *os.File
 	currentPath           string
 	flushFileSize         int
 }
 
-func (self *DownloadHandler) WritePage(page *WebPage) {
+func (self *DownloadHandler) WritePage(page WebPage) {
 	if !IsUTF8(page.Link) {
 		return
 	}
@@ -135,8 +135,6 @@ func (self *DownloadHandler) WritePage(page *WebPage) {
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.Html)
 	self.writer.WriteString("\n")
-	page.Html = ""
-	page = nil
 }
 
 func (self *DownloadHandler) FlushPages() {
@@ -162,8 +160,9 @@ func (self *DownloadHandler) FlushPages() {
 func (self *DownloadHandler) Download() {
 	self.flushFileSize = 0
 	rand.Seed(time.Now().UnixNano())
-	for link := range self.LinksChannel {
+	for link0 := range self.LinksChannel {
 		go func() {
+			link := link0
 			log.Println("begin : ", link)
 			self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
 			html, err := self.Downloader.Download(link)
@@ -174,7 +173,7 @@ func (self *DownloadHandler) Download() {
 			if len(html) < 100 {
 				return
 			}
-			page := &(WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()})
+			page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
 			if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
 				self.PageChannel <- page
 			}
@@ -251,7 +250,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.LinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
-	ret.PageChannel = make(chan *WebPage, DOWNLOADER_QUEUE_SIZE)
+	ret.PageChannel = make(chan WebPage, DOWNLOADER_QUEUE_SIZE)
 	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
 	ret.signals = make(chan os.Signal, 1)
