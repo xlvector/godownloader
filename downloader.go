@@ -58,9 +58,6 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
-	if !IsValidLink(url) {
-		return "", nil
-	}
 	log.Println("download : ", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
@@ -160,44 +157,50 @@ func (self *DownloadHandler) FlushPages() {
 	}
 }
 
+func (self *DownloadHandler) ProcessLink(link string) {
+	if !IsValidLink(link) {
+		return
+	}
+	log.Println("begin : ", link)
+	if CheckBloomFilter(link) {
+		log.Println("downloaded before : ", link)
+	}
+	self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
+	html, err := self.Downloader.Download(link)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if len(html) < 100 {
+		return
+	}
+	page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
+	SetBloomFilter(link)
+	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
+		self.PageChannel <- page
+	}
+
+	elinks := ExtractLinks([]byte(html), link)
+	log.Println("extract links : ", len(elinks))
+	for _, elink := range elinks {
+		nlink := NormalizeLink(elink)
+		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 2 {
+			self.ExtractedLinksChannel <- nlink
+		}
+	}
+	for _, elink := range elinks {
+		nlink := NormalizeLink(elink)
+		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 1 && rand.Float64() < 0.3 {
+			self.ExtractedLinksChannel <- nlink
+		}
+	}
+}
+
 func (self *DownloadHandler) Download() {
 	self.flushFileSize = 0
 	rand.Seed(time.Now().UnixNano())
 	for link0 := range self.LinksChannel {
-		go func() {
-			link := link0
-			log.Println("begin : ", link)
-			self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
-			html, err := self.Downloader.Download(link)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			if len(html) < 100 {
-				return
-			}
-			page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
-			if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
-				self.PageChannel <- page
-			}
-
-			elinks := ExtractLinks([]byte(html), link)
-			log.Println("extract links : ", len(elinks))
-			for _, elink := range elinks {
-				nlink := NormalizeLink(elink)
-				if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 2 {
-					self.ExtractedLinksChannel <- nlink
-				}
-			}
-			for _, elink := range elinks {
-				nlink := NormalizeLink(elink)
-				if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 1 && rand.Float64() < 0.3 {
-					self.ExtractedLinksChannel <- nlink
-				}
-			}
-
-		}()
-
+		go self.ProcessLink(link0)
 	}
 }
 

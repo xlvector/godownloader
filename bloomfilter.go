@@ -49,7 +49,7 @@ func NewBloomFilter() *BloomFilter {
 func (self *BloomFilter) Save() {
 	f, err := os.Create("filter.data")
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	defer f.Close()
 
@@ -63,7 +63,7 @@ func (self *BloomFilter) Save() {
 func (self *BloomFilter) Load() {
 	f, err := os.Open("filter.data")
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	defer f.Close()
 
