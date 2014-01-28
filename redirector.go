@@ -41,10 +41,6 @@ func (self *RedirectorHandler) Redirect(ci int) {
 	priority := ci/ConfigInstance().RedirectChanNum + 1
 	log.Println("priority of chan ", ci, "is", priority)
 	for link := range self.linksChannel[ci] {
-		if self.processedLinks.Contains(link) {
-			continue
-		}
-		self.processedLinks.Add(link)
 
 		log.Println("redirect : ", link)
 		self.metricSender.Inc("crawler.redirector.redirect_link_count", 1, 1.0)
