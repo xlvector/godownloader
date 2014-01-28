@@ -58,7 +58,6 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
-	log.Println("download : ", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
 		return "", err
@@ -174,6 +173,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if len(html) < 100 {
 		return
 	}
+	log.Println("save : ", url)
 	page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
 	SetBloomFilter(link)
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
