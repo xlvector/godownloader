@@ -50,9 +50,9 @@ var lock sync.Mutex
 var lastLoadConfigTime int64
 
 func ConfigInstance() *Config {
-	if configInstance == nil && (time.Now().Unix()-lastLoadConfigTime) > 600 {
+	if configInstance == nil || (time.Now().Unix()-lastLoadConfigTime) > 600 {
 		lock.Lock()
-		if configInstance == nil {
+		if configInstance == nil || (time.Now().Unix()-lastLoadConfigTime) > 600 {
 			configInstance = NewConfig("config.json")
 			log.Println("load config file")
 			lastLoadConfigTime = time.Now().Unix()
