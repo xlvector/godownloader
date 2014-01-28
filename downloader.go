@@ -118,9 +118,11 @@ type DownloadHandler struct {
 
 func (self *DownloadHandler) WritePage(page WebPage) {
 	if !IsUTF8(page.Link) {
+		log.Println("non utf8 link : ", page.Link)
 		return
 	}
 	if !IsUTF8(page.Html) {
+		log.Println("non utf8 page : ", page.Link)
 		return
 	}
 	if !strings.Contains(page.Html, ExtractMainDomain(page.Link)) {
