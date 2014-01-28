@@ -2,9 +2,10 @@ package downloader
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"sync"
+	"time"
 )
 
 type Config struct {
@@ -32,7 +33,7 @@ func NewDefaultConfig() *Config {
 func NewConfig(path string) *Config {
 	text, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return NewDefaultConfig()
 	}
 
@@ -46,13 +47,15 @@ func NewConfig(path string) *Config {
 
 var configInstance *Config = nil
 var lock sync.Mutex
+var lastLoadConfigTime int64
 
 func ConfigInstance() *Config {
-	if configInstance == nil {
+	if configInstance == nil && (time.Now().Unix()-lastLoadConfigTime) > 600 {
 		lock.Lock()
 		if configInstance == nil {
 			configInstance = NewConfig("config.json")
-			fmt.Println(configInstance)
+			log.Println("load config file")
+			lastLoadConfigTime = time.Now().Unix()
 		}
 		lock.Unlock()
 	}

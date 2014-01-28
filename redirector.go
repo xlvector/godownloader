@@ -38,6 +38,8 @@ func (self *RedirectorHandler) GetIP(host string) string {
 }
 
 func (self *RedirectorHandler) Redirect(ci int) {
+	priority := ci/ConfigInstance().RedirectChanNum + 1
+	log.Println("priority of chan ", ci, "is", priority)
 	for link := range self.linksChannel[ci] {
 		if self.processedLinks.Contains(link) {
 			continue
@@ -65,7 +67,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 				resp.Body.Close()
 			}
 		}
-		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute))
+		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) * time.Duration(priority))
 	}
 }
 
