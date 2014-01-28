@@ -112,6 +112,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			ci := Hash(ExtractMainDomain(link))%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 			if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 				log.Println("channel ", ci, " recv link : ", link)
+				self.processedLinks.Add(link)
 				self.linksChannel[ci] <- link
 			}
 		}
