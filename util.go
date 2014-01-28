@@ -1,7 +1,11 @@
 package downloader
 
 import (
+	"io/ioutil"
+	"log"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -42,6 +46,27 @@ func LoopUpIp(host string) string {
 	}
 	for _, ip := range ips {
 		return string(ip)
+	}
+	return ""
+}
+
+func PostHTTPRequest(host string, data map[string]string) string {
+	post := url.Values{}
+	for key, value := range data {
+		post.Set(key, value)
+	}
+	resp, err := http.PostForm(host, post)
+
+	if err != nil {
+		log.Println(err)
+	}
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+		output, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(err)
+		}
+		return string(output)
 	}
 	return ""
 }

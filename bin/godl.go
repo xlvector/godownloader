@@ -23,6 +23,9 @@ func main() {
 	if *mode == "redirect" {
 		http.Handle("/redirect", downloader.NewRedirectorHandler())
 	}
+	if *mode == "filter" {
+		http.Handle("/filter", downloader.NewBloomFilterHandler())
+	}
 
 	s := &http.Server{
 		Addr:           ":" + *port,

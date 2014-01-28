@@ -3,9 +3,13 @@ package downloader
 import (
 	"bufio"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 type BloomFilter struct {
@@ -35,10 +39,10 @@ func NewBloomFilter() *BloomFilter {
 	bf := BloomFilter{}
 	bf.size = 100000000
 	bf.h = make([]byte, bf.size)
-
 	for i := int32(0); i < bf.size; i++ {
 		bf.h[i] = 0
 	}
+	bf.Load()
 	return &bf
 }
 
@@ -97,4 +101,63 @@ func (self *BloomFilter) Contains(buf string) bool {
 	} else {
 		return false
 	}
+}
+
+type BloomFilterHandler struct {
+	filter  *BloomFilter
+	signals chan os.Signal
+}
+
+func NewBloomFilterHandler() *BloomFilterHandler {
+	ret := BloomFilterHandler{}
+	ret.filter = NewBloomFilter()
+	ret.signals = make(chan os.Signal, 1)
+	signal.Notify(ret.signals, syscall.SIGINT)
+	go func() {
+		<-ret.signals
+		ret.filter.Save()
+		os.Exit(0)
+	}()
+	return &ret
+}
+
+func (self *BloomFilterHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println(r)
+		}
+	}()
+
+	link := req.PostFormValue("link")
+	method := req.PostFormValue("method")
+
+	if method == "get" {
+		if self.filter.Contains(link) {
+			fmt.Fprintf(w, "true")
+		} else {
+			fmt.Fprintf(w, "false")
+		}
+	} else if method == "set" {
+		self.filter.Add(link)
+		fmt.Fprintf(w, "")
+	}
+}
+
+func CheckBloomFilter(link string) bool {
+	req := make(map[string]string)
+	req["method"] = "get"
+	req["link"] = link
+	output := strings.Trim(PostHTTPRequest(ConfigInstance().FilterHost, req), "\n")
+	if output == "true" {
+		return true
+	} else {
+		return false
+	}
+}
+
+func SetBloomFilter(link string) {
+	req := make(map[string]string)
+	req["method"] = "set"
+	req["link"] = link
+	PostHTTPRequest(ConfigInstance().FilterHost, req)
 }

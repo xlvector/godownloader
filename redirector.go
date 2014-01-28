@@ -4,11 +4,9 @@ import (
 	"crawler/downloader/graphite"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -49,19 +47,9 @@ func (self *RedirectorHandler) Redirect(ci int) {
 		pb.Links = []string{link}
 		jsonBlob, err := json.Marshal(&pb)
 		if err == nil {
-			post := url.Values{}
-			post.Set("links", string(jsonBlob))
-
-			resp, err := http.PostForm(ConfigInstance().DownloaderHost, post)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			if resp != nil && resp.Body != nil {
-				ioutil.ReadAll(resp.Body)
-				resp.Body.Close()
-			}
+			req := make(map[string]string)
+			req["links"] = string(jsonBlob)
+			PostHTTPRequest(ConfigInstance().DownloaderHost, req)
 		}
 		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) / time.Duration(priority))
 	}

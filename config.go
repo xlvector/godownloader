@@ -11,6 +11,7 @@ import (
 type Config struct {
 	DownloaderHost           string   `json:"downloader_host"`
 	RedirectorHost           string   `json:"redirector_host"`
+	FilterHost               string   `json:"filter_host"`
 	GraphiteHost             string   `json:"graphite_host"`
 	SitePatterns             []string `json:"site_patterns"`
 	HighPrioritySitePatterns []string `json:"hp_site_patterns"`

@@ -10,7 +10,6 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -223,17 +222,9 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 			}
 			jsonBlob, err := json.Marshal(&pb)
 			if err == nil {
-				post := url.Values{}
-				post.Set("links", string(jsonBlob))
-				resp, err := http.PostForm(ConfigInstance().RedirectorHost, post)
-
-				if err != nil {
-					log.Println(err)
-				}
-				if resp != nil && resp.Body != nil {
-					defer resp.Body.Close()
-					ioutil.ReadAll(resp.Body)
-				}
+				req := make(map[string]string)
+				req["links"] = string(jsonBlob)
+				PostHTTPRequest(ConfigInstance().RedirectorHost, req)
 			}
 			tm = time.Now().Unix()
 			lm = make(map[string]bool)
