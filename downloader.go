@@ -117,18 +117,21 @@ type DownloadHandler struct {
 }
 
 func (self *DownloadHandler) WritePage(page WebPage) {
-	if !IsUTF8(page.Link) {
-		log.Println("non utf8 link : ", page.Link)
-		return
-	}
-	if !IsUTF8(page.Html) {
-		log.Println("non utf8 page : ", page.Link)
-		return
-	}
-	if !strings.Contains(page.Html, ExtractMainDomain(page.Link)) {
-		log.Println("html does not have domain", page.Link)
-		return
-	}
+	/*
+		if !IsUTF8(page.Link) {
+			log.Println("non utf8 link : ", page.Link)
+			return
+		}
+
+		if !IsUTF8(page.Html) {
+			log.Println("non utf8 page : ", page.Link)
+			return
+		}
+		if !strings.Contains(page.Html, ExtractMainDomain(page.Link)) {
+			log.Println("html does not have domain", page.Link)
+			return
+		}
+	*/
 	self.metricSender.Inc("crawler.downloader.save_page_count", 1, 1.0)
 	self.writer.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
 	self.writer.WriteString("\t")
