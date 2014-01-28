@@ -134,6 +134,7 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.Html)
 	self.writer.WriteString("\n")
+	log.Println("write : ", page.Link)
 }
 
 func (self *DownloadHandler) FlushPages() {
@@ -173,7 +174,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if len(html) < 100 {
 		return
 	}
-	log.Println("save : ", link)
+	log.Println("finish : ", link)
 	page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
 	SetBloomFilter(link)
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
