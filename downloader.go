@@ -73,11 +73,11 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	if err != nil || resp == nil || resp.Body == nil {
 		return "", err
 	} else {
-
+		defer resp.Body.Close()
 		if !strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
 			return "", errors.New("non html page")
 		}
-		defer resp.Body.Close()
+
 		html, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return "", err
