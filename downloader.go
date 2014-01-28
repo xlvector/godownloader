@@ -173,7 +173,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if len(html) < 100 {
 		return
 	}
-	log.Println("save : ", url)
+	log.Println("save : ", link)
 	page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
 	SetBloomFilter(link)
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
