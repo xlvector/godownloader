@@ -67,7 +67,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 				resp.Body.Close()
 			}
 		}
-		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) * time.Duration(priority))
+		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) / time.Duration(priority))
 	}
 }
 
