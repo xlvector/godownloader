@@ -148,11 +148,10 @@ func (self *DownloadHandler) FlushPages() {
 		self.flushFileSize += 1
 
 		if self.flushFileSize%ConfigInstance().WritePageFreq == 0 {
-			defer self.writer.Close()
-			os.Rename("./tmp/"+self.currentPath, "./pages/"+self.currentPath)
+			self.writer.Close()
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 			var err error
-			self.writer, err = os.Create("./tmp/" + self.currentPath)
+			self.writer, err = os.Create("./pages/" + self.currentPath)
 			if err != nil {
 				log.Println(err)
 				os.Exit(0)
@@ -247,7 +246,7 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.urlFilter = NewURLFilter()
 	var err error
 	ret.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
-	ret.writer, err = os.Create("./tmp/" + ret.currentPath)
+	ret.writer, err = os.Create("./pages/" + ret.currentPath)
 	if err != nil {
 		log.Println(err)
 		os.Exit(0)
@@ -262,7 +261,6 @@ func NewDownloadHanler() *DownloadHandler {
 	go func() {
 		<-ret.signals
 		defer ret.writer.Close()
-		os.Rename("./tmp/"+ret.currentPath, "./pages/"+ret.currentPath)
 		os.Exit(0)
 	}()
 	go ret.Download()
