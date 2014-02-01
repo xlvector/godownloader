@@ -49,7 +49,7 @@ func IsValidLink(link string) bool {
 		return false
 	}
 	for _, ch := range link {
-		if ch == AND || ch == NMARK || ch == SEMICOLON {
+		if ch == NMARK || ch == SEMICOLON {
 			return false
 		}
 		if uint8(ch) > 127 {
