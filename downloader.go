@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -56,6 +57,28 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 	}
 
 	return &ret
+}
+
+func NewHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
+	ret := HTTPGetDownloader{}
+	ret.cleaner = NewHTMLCleaner()
+	if CheckProxy(proxy) {
+		proxyUrl, err := url.Parse(proxy)
+		if err != nil {
+			return nil
+		}
+		ret.client = &http.Client{
+			Transport: &http.Transport{
+				Dial:                  dialTimeout,
+				DisableKeepAlives:     true,
+				ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
+				Proxy: http.ProxyURL(proxyUrl),
+			},
+		}
+		return &ret
+	} else {
+		return nil
+	}
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
@@ -108,6 +131,7 @@ type DownloadHandler struct {
 	metricSender          *graphite.Client
 	LinksChannel          chan string
 	Downloader            *HTTPGetDownloader
+	ProxyDownloader       []*HTTPGetDownloader
 	signals               chan os.Signal
 	ExtractedLinksChannel chan string
 	PageChannel           chan WebPage
@@ -115,6 +139,7 @@ type DownloadHandler struct {
 	writer                *os.File
 	currentPath           string
 	flushFileSize         int
+	downloadedPageCount   int
 }
 
 func (self *DownloadHandler) WritePage(page WebPage) {
@@ -158,26 +183,42 @@ func (self *DownloadHandler) FlushPages() {
 	}
 }
 
+func (self *DownloadHandler) GetProxyDownloader() *HTTPGetDownloader {
+	if len(self.ProxyDownloader) == 0 {
+		return nil
+	}
+	return self.ProxyDownloader[rand.Intn(len(self.ProxyDownloader))]
+}
+
 func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsValidLink(link) {
 		return
 	}
 	log.Println("begin : ", link)
-	if CheckBloomFilter(link) {
-		log.Println("downloaded before : ", link)
+	self.downloadedPageCount += 1
+	if self.downloadedPageCount > 500 {
+		if CheckBloomFilter(link) {
+			log.Println("downloaded before : ", link)
+		}
 	}
+	SetBloomFilter(link)
 	self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
-	html, err := self.Downloader.Download(link)
+	html, err := self.GetProxyDownloader().Download(link)
 	if err != nil {
 		log.Println(err)
-		return
+		self.metricSender.Inc("crawler.downloader.original_tryto_download_count", 1, 1.0)
+		html, err = self.Downloader.Download(link)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 	if len(html) < 100 {
 		return
 	}
 	log.Println("finish : ", link)
 	page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
-	SetBloomFilter(link)
+
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
 		self.PageChannel <- page
 	}
@@ -253,7 +294,16 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.PageChannel = make(chan WebPage, DOWNLOADER_QUEUE_SIZE)
 	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
+	for _, proxy := range GetProxyList() {
+		pd := NewHTTPGetProxyDownloader(proxy)
+		if pd == nil {
+			continue
+		}
+		ret.ProxyDownloader = append(ret.ProxyDownloader, pd)
+	}
+	log.Println("proxy downloader count", len(ret.ProxyDownloader))
 	ret.signals = make(chan os.Signal, 1)
+	ret.downloadedPageCount = 0
 	signal.Notify(ret.signals, syscall.SIGINT)
 	go func() {
 		<-ret.signals
