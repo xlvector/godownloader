@@ -124,18 +124,21 @@ type WebPage struct {
 }
 
 type DownloadHandler struct {
-	metricSender          *graphite.Client
-	LinksChannel          chan string
-	Downloader            *HTTPGetDownloader
-	ProxyDownloader       []*HTTPGetDownloader
-	signals               chan os.Signal
-	ExtractedLinksChannel chan string
-	PageChannel           chan WebPage
-	urlFilter             *URLFilter
-	writer                *os.File
-	currentPath           string
-	flushFileSize         int
-	downloadedPageCount   int
+	metricSender             *graphite.Client
+	LinksChannel             chan string
+	Downloader               *HTTPGetDownloader
+	ProxyDownloader          []*HTTPGetDownloader
+	signals                  chan os.Signal
+	ExtractedLinksChannel    chan string
+	PageChannel              chan WebPage
+	urlFilter                *URLFilter
+	writer                   *os.File
+	currentPath              string
+	flushFileSize            int
+	processedPageCount       int
+	totalDownloadedPageCount int
+	proxyDownloadedPageCount int
+	writePageCount           int
 }
 
 func (self *DownloadHandler) WritePage(page WebPage) {
@@ -150,7 +153,7 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 		return
 	}
 
-	self.metricSender.Inc("crawler.downloader.save_page_count", 1, 1.0)
+	self.writePageCount += 1
 	self.writer.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.Link)
@@ -191,14 +194,13 @@ func (self *DownloadHandler) ProcessLink(link string) {
 		return
 	}
 	log.Println("begin : ", link)
-	self.downloadedPageCount += 1
-	if self.downloadedPageCount > 500 {
+	self.processedPageCount += 1
+	if self.processedPageCount > 500 {
 		if CheckBloomFilter(link) {
 			log.Println("downloaded before : ", link)
 		}
 	}
 	SetBloomFilter(link)
-	self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
 	html := ""
 	var err error
 	if rand.Float64() < 1.0 {
@@ -208,9 +210,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 			if err != nil {
 				log.Println("proxy", err)
 				html, err = self.Downloader.Download(link)
-				self.metricSender.Inc("crawler.downloader.proxy_fail_download_count", 1, 1.0)
-			} else {
-				self.metricSender.Inc("crawler.downloader.proxy_success_download_count", 1, 1.0)
+				self.proxyDownloadedPageCount += 1
 			}
 		}
 	} else {
@@ -221,6 +221,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 		log.Println(err)
 		return
 	}
+	self.totalDownloadedPageCount += 1
 
 	if len(html) < 100 {
 		return
@@ -303,6 +304,10 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.PageChannel = make(chan WebPage, DOWNLOADER_QUEUE_SIZE)
 	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
+	ret.processedPageCount = 0
+	ret.totalDownloadedPageCount = 0
+	ret.proxyDownloadedPageCount = 0
+	ret.writePageCount = 0
 	for _, proxy := range GetProxyList() {
 		pd := NewHTTPGetProxyDownloader(proxy)
 		if pd == nil {
@@ -312,7 +317,6 @@ func NewDownloadHanler() *DownloadHandler {
 	}
 	log.Println("proxy downloader count", len(ret.ProxyDownloader))
 	ret.signals = make(chan os.Signal, 1)
-	ret.downloadedPageCount = 0
 	signal.Notify(ret.signals, syscall.SIGINT)
 	go func() {
 		<-ret.signals
@@ -352,6 +356,9 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(self.flushFileSize), 1.0)
 	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".pagechannelsize", int64(len(self.PageChannel)), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".totalDownloadedPageCount", int64(self.totalDownloadedPageCount), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageCount", int64(self.proxyDownloadedPageCount), 1.0)
+	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".writePageCount", int64(self.writePageCount), 1.0)
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
 }
