@@ -75,7 +75,6 @@ func NewHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
 		},
 	}
 	return &ret
-
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
@@ -202,7 +201,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
 	html := ""
 	var err error
-	if rand.Float64() < 0.2 {
+	if rand.Float64() < 1.0 {
 		downloader := self.GetProxyDownloader()
 		if downloader != nil {
 			html, err = downloader.Download(link)
