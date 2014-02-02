@@ -206,12 +206,15 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	html := ""
 	var err error
 	if rand.Float64() < 0.2 {
-		html, err = self.GetProxyDownloader().Download(link)
-		if err != nil {
-			log.Println(err)
-			html, err = self.Downloader.Download(link)
-		} else {
-			self.metricSender.Inc("crawler.downloader.proxy_tryto_download_count", 1, 1.0)
+		downloader := self.GetProxyDownloader()
+		if downloader != nil {
+			html, err = downloader.Download(link)
+			if err != nil {
+				log.Println(err)
+				html, err = self.Downloader.Download(link)
+			} else {
+				self.metricSender.Inc("crawler.downloader.proxy_tryto_download_count", 1, 1.0)
+			}
 		}
 	} else {
 		html, err = self.Downloader.Download(link)

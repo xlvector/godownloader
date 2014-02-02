@@ -9,7 +9,7 @@ import (
 )
 
 func CheckProxy(proxy string) bool {
-	_, err := net.DialTimeout("tcp", proxy, time.Millisecond*100)
+	_, err := net.DialTimeout("tcp", proxy, time.Millisecond*5000)
 	if err != nil {
 		return false
 	}
