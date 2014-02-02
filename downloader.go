@@ -210,6 +210,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 			if err != nil {
 				log.Println("proxy", err)
 				html, err = self.Downloader.Download(link)
+			} else {
 				self.proxyDownloadedPageCount += 1
 			}
 		}
