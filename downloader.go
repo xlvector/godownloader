@@ -62,23 +62,20 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 func NewHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
 	ret := HTTPGetDownloader{}
 	ret.cleaner = NewHTMLCleaner()
-	if CheckProxy(proxy) {
-		proxyUrl, err := url.Parse(proxy)
-		if err != nil {
-			return nil
-		}
-		ret.client = &http.Client{
-			Transport: &http.Transport{
-				Dial:                  dialTimeout,
-				DisableKeepAlives:     true,
-				ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
-				Proxy: http.ProxyURL(proxyUrl),
-			},
-		}
-		return &ret
-	} else {
+	proxyUrl, err := url.Parse(proxy)
+	if err != nil {
 		return nil
 	}
+	ret.client = &http.Client{
+		Transport: &http.Transport{
+			Dial:                  dialTimeout,
+			DisableKeepAlives:     true,
+			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
+			Proxy: http.ProxyURL(proxyUrl),
+		},
+	}
+	return &ret
+
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, error) {

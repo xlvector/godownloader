@@ -5,5 +5,4 @@ import (
 )
 
 func TestRedirector(t *testing.T) {
-
 }
