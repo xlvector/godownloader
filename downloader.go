@@ -189,6 +189,15 @@ func (self *DownloadHandler) GetProxyDownloader() *HTTPGetDownloader {
 	return self.ProxyDownloader[rand.Intn(len(self.ProxyDownloader))]
 }
 
+func (self *DownloadHandler) UseProxy(link string) bool {
+	domain := ExtractMainDomain(link)
+	if strings.Contains(domain, "edu.cn") || strings.Contains(domain, "gov.cn") {
+		return false
+	} else {
+		return true
+	}
+}
+
 func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsValidLink(link) {
 		return
@@ -203,7 +212,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	SetBloomFilter(link)
 	html := ""
 	var err error
-	if rand.Float64() < 1.0 {
+	if self.UseProxy(link) {
 		downloader := self.GetProxyDownloader()
 		if downloader != nil {
 			html, err = downloader.Download(link)
