@@ -206,10 +206,11 @@ func (self *DownloadHandler) ProcessLink(link string) {
 		if downloader != nil {
 			html, err = downloader.Download(link)
 			if err != nil {
-				log.Println(err)
+				log.Println("proxy", err)
 				html, err = self.Downloader.Download(link)
+				self.metricSender.Inc("crawler.downloader.proxy_fail_download_count", 1, 1.0)
 			} else {
-				self.metricSender.Inc("crawler.downloader.proxy_tryto_download_count", 1, 1.0)
+				self.metricSender.Inc("crawler.downloader.proxy_success_download_count", 1, 1.0)
 			}
 		}
 	} else {
