@@ -203,16 +203,25 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	}
 	SetBloomFilter(link)
 	self.metricSender.Inc("crawler.downloader.tryto_download_count", 1, 1.0)
-	html, err := self.GetProxyDownloader().Download(link)
-	if err != nil {
-		log.Println(err)
-		self.metricSender.Inc("crawler.downloader.original_tryto_download_count", 1, 1.0)
-		html, err = self.Downloader.Download(link)
+	html := ""
+	var err error
+	if rand.Float64() < 0.2 {
+		html, err = self.GetProxyDownloader().Download(link)
 		if err != nil {
 			log.Println(err)
-			return
+			html, err = self.Downloader.Download(link)
+		} else {
+			self.metricSender.Inc("crawler.downloader.proxy_tryto_download_count", 1, 1.0)
 		}
+	} else {
+		html, err = self.Downloader.Download(link)
 	}
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	if len(html) < 100 {
 		return
 	}
