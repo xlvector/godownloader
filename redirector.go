@@ -106,26 +106,28 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			}
 		}
 	}
-	linkChannelTotalSize := 0
 
-	maxChannelSize := 0
-	nonEmptyQueueCount := 0
+	if rand.Float64() < 0.2 {
+		linkChannelTotalSize := 0
+		maxChannelSize := 0
+		nonEmptyQueueCount := 0
 
-	for _, cn := range self.linksChannel {
+		for _, cn := range self.linksChannel {
 
-		size := len(cn)
+			size := len(cn)
 
-		linkChannelTotalSize += size
+			linkChannelTotalSize += size
 
-		if maxChannelSize < size {
-			maxChannelSize = size
+			if maxChannelSize < size {
+				maxChannelSize = size
+			}
+			if size > 0 {
+				nonEmptyQueueCount += 1
+			}
 		}
-		if size > 0 {
-			nonEmptyQueueCount += 1
-		}
+		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".channelsize", int64(linkChannelTotalSize), 1.0)
+		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".maxchannelsize", int64(maxChannelSize), 1.0)
+		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".nonemptychannelcount", int64(nonEmptyQueueCount), 1.0)
 	}
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".channelsize", int64(linkChannelTotalSize), 1.0)
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".maxchannelsize", int64(maxChannelSize), 1.0)
-	self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".nonemptychannelcount", int64(nonEmptyQueueCount), 1.0)
 	fmt.Fprint(w, "")
 }

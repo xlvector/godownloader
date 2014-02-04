@@ -70,3 +70,34 @@ func PostHTTPRequest(host string, data map[string]string) string {
 	}
 	return ""
 }
+
+func IsChinesePage(html string) bool {
+	if strings.Contains(html, "的") {
+		return true
+	}
+	if strings.Contains(html, "了") {
+		return true
+	}
+	if strings.Contains(html, "中") {
+		return true
+	}
+	if strings.Contains(html, "页") {
+		return true
+	}
+	if strings.Contains(html, "地") {
+		return true
+	}
+	if strings.Contains(html, "是") {
+		return true
+	}
+	if strings.Contains(html, "有") {
+		return true
+	}
+	if strings.Contains(html, "一") {
+		return true
+	}
+	if strings.Contains(html, "个") {
+		return true
+	}
+	return false
+}

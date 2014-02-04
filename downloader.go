@@ -239,6 +239,10 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if len(html) < 100 {
 		return
 	}
+
+	if !IsChinesePage(html) {
+		return
+	}
 	log.Println("finish : ", link)
 	page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
 
