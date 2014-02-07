@@ -256,13 +256,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	log.Println("extract links : ", len(elinks))
 	for _, elink := range elinks {
 		nlink := NormalizeLink(elink)
-		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 2 {
-			self.ExtractedLinksChannel <- nlink
-		}
-	}
-	for _, elink := range elinks {
-		nlink := NormalizeLink(elink)
-		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE && self.Match(nlink) == 1 && rand.Float64() < 0.3 {
+		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
 			self.ExtractedLinksChannel <- nlink
 		}
 	}
