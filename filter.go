@@ -1,39 +1,21 @@
 package downloader
 
-import (
-	"regexp"
-)
-
 type URLFilter struct {
-	patterns  []*regexp.Regexp
-	hpatterns []*regexp.Regexp
+	ruleMatcher *RuleMatcher
 }
 
 func NewURLFilter() *URLFilter {
 	ret := URLFilter{}
-	ret.patterns = []*regexp.Regexp{}
-	ret.hpatterns = []*regexp.Regexp{}
+	ret.ruleMatcher = NewRuleMatcher()
 	for _, pt := range ConfigInstance().SitePatterns {
-		re := regexp.MustCompile(pt)
-		ret.patterns = append(ret.patterns, re)
+		ret.ruleMatcher.AddRule(pt, 1)
 	}
 	for _, pt := range ConfigInstance().HighPrioritySitePatterns {
-		re := regexp.MustCompile(pt)
-		ret.hpatterns = append(ret.hpatterns, re)
+		ret.ruleMatcher.AddRule(pt, 2)
 	}
 	return &ret
 }
 
 func (self *URLFilter) Match(link string) int {
-	for _, pt := range self.hpatterns {
-		if pt.FindString(link) == link {
-			return 2
-		}
-	}
-	for _, pt := range self.patterns {
-		if pt.FindString(link) == link {
-			return 1
-		}
-	}
-	return 0
+	return self.ruleMatcher.MatchRule(link)
 }
