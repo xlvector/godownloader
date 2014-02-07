@@ -124,21 +124,22 @@ type WebPage struct {
 }
 
 type DownloadHandler struct {
-	metricSender             *graphite.Client
-	LinksChannel             chan string
-	Downloader               *HTTPGetDownloader
-	ProxyDownloader          []*HTTPGetDownloader
-	signals                  chan os.Signal
-	ExtractedLinksChannel    chan string
-	PageChannel              chan WebPage
-	urlFilter                *URLFilter
-	writer                   *os.File
-	currentPath              string
-	flushFileSize            int
-	processedPageCount       int
-	totalDownloadedPageCount int
-	proxyDownloadedPageCount int
-	writePageCount           int
+	metricSender                   *graphite.Client
+	LinksChannel                   chan string
+	Downloader                     *HTTPGetDownloader
+	ProxyDownloader                []*HTTPGetDownloader
+	signals                        chan os.Signal
+	ExtractedLinksChannel          chan string
+	PageChannel                    chan WebPage
+	urlFilter                      *URLFilter
+	writer                         *os.File
+	currentPath                    string
+	flushFileSize                  int
+	processedPageCount             int
+	totalDownloadedPageCount       int
+	proxyDownloadedPageCount       int
+	proxyDownloadedPageFailedCount int
+	writePageCount                 int
 }
 
 func (self *DownloadHandler) WritePage(page WebPage) {
@@ -221,6 +222,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 			html, err = downloader.Download(link)
 			if err != nil {
 				log.Println("proxy", err)
+				self.proxyDownloadedPageFailedCount += 1
 				html, err = self.Downloader.Download(link)
 			} else {
 				self.proxyDownloadedPageCount += 1
@@ -369,13 +371,16 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		PostChannelLength:      len(self.LinksChannel),
 		ExtractedChannelLength: len(self.ExtractedLinksChannel),
 	}
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".postchannelsize", int64(ret.PostChannelLength), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(self.flushFileSize), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".pagechannelsize", int64(len(self.PageChannel)), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".totalDownloadedPageCount", int64(self.totalDownloadedPageCount), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageCount", int64(self.proxyDownloadedPageCount), 1.0)
-	self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".writePageCount", int64(self.writePageCount), 1.0)
+	if rand.Float64() < 0.1 {
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".postchannelsize", int64(ret.PostChannelLength), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(self.flushFileSize), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".pagechannelsize", int64(len(self.PageChannel)), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".totalDownloadedPageCount", int64(self.totalDownloadedPageCount), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageCount", int64(self.proxyDownloadedPageCount), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageFailedCount", int64(self.proxyDownloadedPageFailedCount), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".writePageCount", int64(self.writePageCount), 1.0)
+	}
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
 }
