@@ -258,14 +258,13 @@ func (self *DownloadHandler) ProcessLink(link string) {
 		nlink := NormalizeLink(elink)
 		linkPriority := self.Match(nlink)
 		if linkPriority <= 0 {
-			log.Println("unmatch : ", nlink)
 			continue
 		}
 		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
 			if linkPriority == 2 {
 				self.ExtractedLinksChannel <- nlink
 			} else if linkPriority == 1 {
-				if rand.Float64() < 0.1 {
+				if rand.Float64() < 0.3 {
 					self.ExtractedLinksChannel <- nlink
 				}
 			}

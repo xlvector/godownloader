@@ -7,7 +7,7 @@ import (
 func TestRuleMatcher(t *testing.T) {
 	rm := NewRuleMatcher()
 
-	rm.AddRule("http://[a-z0-9]+.sina.com.cn/", 2)
+	rm.AddRule("http://[a-z0-9]+.sina.com.cn[/]*", 2)
 	rm.AddRule("http://[a-z0-9]+.[a-z0-9]+.com/", 1)
 
 	if rm.MatchRule("http://t.sina.com.cn/") != 2 {
