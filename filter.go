@@ -1,5 +1,9 @@
 package downloader
 
+import (
+	"fmt"
+)
+
 type URLFilter struct {
 	ruleMatcher *RuleMatcher
 }
@@ -13,6 +17,7 @@ func NewURLFilter() *URLFilter {
 	for _, pt := range ConfigInstance().HighPrioritySitePatterns {
 		ret.ruleMatcher.AddRule(pt, 2)
 	}
+	fmt.Println(ret.ruleMatcher)
 	return &ret
 }
 
