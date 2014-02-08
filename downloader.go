@@ -261,13 +261,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 			continue
 		}
 		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-			if linkPriority == 2 {
-				self.ExtractedLinksChannel <- nlink
-			} else if linkPriority == 1 {
-				if rand.Float64() < 0.3 {
-					self.ExtractedLinksChannel <- nlink
-				}
-			}
+			self.ExtractedLinksChannel <- nlink
 		}
 	}
 }

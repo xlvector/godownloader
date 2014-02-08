@@ -54,7 +54,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 		}
 		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) / time.Duration(priority))
 		if n%100 == 0 {
-			time.Sleep(time.Duration(rand.Int63n(60)) * time.Second)
+			time.Sleep(time.Duration(rand.Int63n(600)) * time.Second)
 			log.Println("channel sleep : ", ci)
 		}
 	}
