@@ -49,7 +49,9 @@ func (self *RuleMatcher) MatchRule(link string) int {
 				}
 			}
 		}
-	} else {
+	}
+
+	if maxPriority <= 0 {
 		for _, rule := range self.CommonRules {
 			if rule.Regex.FindString(link) == link {
 				if maxPriority < rule.Priority {
