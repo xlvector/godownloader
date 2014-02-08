@@ -207,9 +207,6 @@ func (self *DownloadHandler) GetProxyDownloader() *HTTPGetDownloader {
 }
 
 func (self *DownloadHandler) UseProxy(link string) bool {
-	if rand.Float64() > 0.5 {
-		return false
-	}
 	domain := ExtractMainDomain(link)
 	if strings.Contains(domain, "edu.cn") || strings.Contains(domain, "gov.cn") {
 		return false
