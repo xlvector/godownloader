@@ -11,6 +11,7 @@ const (
 	SEMICOLON = ';'
 	SQUOT     = '\''
 	NMARK     = '#'
+	COLON     = ':'
 	QMARK     = '?'
 	AND       = '&'
 )
@@ -45,11 +46,11 @@ func IsValidLink(link string) bool {
 	if len(link) < 8 {
 		return false
 	}
-	if len(link) > 255 {
+	if len(link) > 200 {
 		return false
 	}
 	for _, ch := range link {
-		if ch == NMARK || ch == SEMICOLON {
+		if ch == NMARK || ch == SEMICOLON || ch == COLON {
 			return false
 		}
 		if uint8(ch) > 127 {

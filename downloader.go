@@ -30,8 +30,10 @@ type Downloader interface {
 }
 
 type HTTPGetDownloader struct {
-	cleaner *HTMLCleaner
-	client  *http.Client
+	cleaner      *HTMLCleaner
+	client       *http.Client
+	successCount int
+	failCount    int
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
@@ -46,7 +48,7 @@ func dialTimeout(network, addr string) (net.Conn, error) {
 }
 
 func NewHTTPGetDownloader() *HTTPGetDownloader {
-	ret := HTTPGetDownloader{}
+	ret := HTTPGetDownloader{successCount: 0, failCount: 0}
 	ret.cleaner = NewHTMLCleaner()
 	ret.client = &http.Client{
 		Transport: &http.Transport{
@@ -60,7 +62,7 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 }
 
 func NewHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
-	ret := HTTPGetDownloader{}
+	ret := HTTPGetDownloader{successCount: 0, failCount: 0}
 	ret.cleaner = NewHTMLCleaner()
 	proxyUrl, err := url.Parse(proxy)
 	if err != nil {
@@ -187,7 +189,21 @@ func (self *DownloadHandler) GetProxyDownloader() *HTTPGetDownloader {
 	if len(self.ProxyDownloader) == 0 {
 		return nil
 	}
-	return self.ProxyDownloader[rand.Intn(len(self.ProxyDownloader))]
+	p := []float64{}
+	sum := 0.0
+	for _, d := range self.ProxyDownloader {
+		ratio := float64(d.successCount+10) / float64(d.successCount+d.failCount+10)
+		p = append(p, ratio)
+		sum += ratio
+	}
+	pr := rand.Float64() * sum
+	for i, pn := range p {
+		pr -= pn
+		if pr <= 0 {
+			return self.ProxyDownloader[i]
+		}
+	}
+	return self.ProxyDownloader[len(self.ProxyDownloader)-1]
 }
 
 func (self *DownloadHandler) UseProxy(link string) bool {
@@ -216,17 +232,17 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	SetBloomFilter(link)
 	html := ""
 	var err error
-	if self.UseProxy(link) {
-		downloader := self.GetProxyDownloader()
-		if downloader != nil {
-			html, err = downloader.Download(link)
-			if err != nil {
-				log.Println("proxy", err)
-				self.proxyDownloadedPageFailedCount += 1
-				html, err = self.Downloader.Download(link)
-			} else {
-				self.proxyDownloadedPageCount += 1
-			}
+	downloader := self.GetProxyDownloader()
+	if self.UseProxy(link) && downloader != nil {
+		html, err = downloader.Download(link)
+		if err != nil {
+			log.Println("proxy", err)
+			self.proxyDownloadedPageFailedCount += 1
+			downloader.failCount += 1
+			html, err = self.Downloader.Download(link)
+		} else {
+			self.proxyDownloadedPageCount += 1
+			downloader.successCount += 1
 		}
 	} else {
 		html, err = self.Downloader.Download(link)
