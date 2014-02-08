@@ -16,7 +16,7 @@ type RedirectorHandler struct {
 	linksChannel   []chan string
 	urlFilter      *URLFilter
 	dnsCache       map[string]string
-	usedChannels   map[int]bool
+	usedChannels   map[int]int64
 }
 
 func (self *RedirectorHandler) Match(link string) int {
@@ -68,7 +68,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 		ret.linksChannel = append(ret.linksChannel, make(chan string, ConfigInstance().RedirectChanSize))
 	}
 	ret.processedLinks = NewBloomFilter()
-	ret.usedChannels = make(map[int]bool)
+	ret.usedChannels = make(map[int]int64)
 	ret.urlFilter = NewURLFilter()
 	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
 		go ret.Redirect(i)
@@ -104,7 +104,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 				log.Println("channel ", ci, " recv link : ", link, ExtractMainDomain(link))
 				self.processedLinks.Add(link)
 				self.linksChannel[ci] <- link
-				self.usedChannels[int(ci)] = true
+				self.usedChannels[int(ci)] = time.Now().Unix()
 			}
 		}
 	}
@@ -127,10 +127,19 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 				nonEmptyQueueCount += 1
 			}
 		}
+
+		usedChannelCount := 0
+		currentTm := time.Now().Unix()
+		for _, tm := range self.usedChannels {
+			if currentTm-tm > 120 {
+				continue
+			}
+			usedChannelCount += 1
+		}
 		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".channelsize", int64(linkChannelTotalSize), 1.0)
 		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".maxchannelsize", int64(maxChannelSize), 1.0)
 		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".nonemptychannelcount", int64(nonEmptyQueueCount), 1.0)
-		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".usedchannelcount", int64(len(self.usedChannels)), 1.0)
+		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".usedchannelcount", int64(usedChannelCount), 1.0)
 	}
 	fmt.Fprint(w, "")
 }
