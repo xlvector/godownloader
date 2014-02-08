@@ -376,6 +376,7 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 
 		for _, link := range pb.Links {
 			if len(self.LinksChannel) < DOWNLOADER_QUEUE_SIZE {
+				log.Println("recv : ", link)
 				self.LinksChannel <- link
 			}
 		}
