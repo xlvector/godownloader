@@ -189,21 +189,7 @@ func (self *DownloadHandler) GetProxyDownloader() *HTTPGetDownloader {
 	if len(self.ProxyDownloader) == 0 {
 		return nil
 	}
-	p := []float64{}
-	sum := 0.0
-	for _, d := range self.ProxyDownloader {
-		ratio := float64(d.successCount+10) / float64(d.successCount+d.failCount+10)
-		p = append(p, ratio)
-		sum += ratio
-	}
-	pr := rand.Float64() * sum
-	for i, pn := range p {
-		pr -= pn
-		if pr <= 0 {
-			return self.ProxyDownloader[i]
-		}
-	}
-	return self.ProxyDownloader[len(self.ProxyDownloader)-1]
+	return self.ProxyDownloader[rand.Intn(len(self.ProxyDownloader))]
 }
 
 func (self *DownloadHandler) UseProxy(link string) bool {
