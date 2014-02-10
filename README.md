@@ -41,3 +41,7 @@ Redirector will only post important links to downloader online. By analyze downl
 ## Information Extractor(IE)
 
 IE will extract structed data from webpages in HDFS and save them in database, etc.
+
+# Golang Crawler Need to Know
+
+* 

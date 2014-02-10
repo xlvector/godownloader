@@ -30,10 +30,8 @@ type Downloader interface {
 }
 
 type HTTPGetDownloader struct {
-	cleaner      *HTMLCleaner
-	client       *http.Client
-	successCount int
-	failCount    int
+	cleaner *HTMLCleaner
+	client  *http.Client
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
@@ -48,7 +46,7 @@ func dialTimeout(network, addr string) (net.Conn, error) {
 }
 
 func NewHTTPGetDownloader() *HTTPGetDownloader {
-	ret := HTTPGetDownloader{successCount: 0, failCount: 0}
+	ret := HTTPGetDownloader{}
 	ret.cleaner = NewHTMLCleaner()
 	ret.client = &http.Client{
 		Transport: &http.Transport{
@@ -62,7 +60,7 @@ func NewHTTPGetDownloader() *HTTPGetDownloader {
 }
 
 func NewHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
-	ret := HTTPGetDownloader{successCount: 0, failCount: 0}
+	ret := HTTPGetDownloader{}
 	ret.cleaner = NewHTMLCleaner()
 	proxyUrl, err := url.Parse(proxy)
 	if err != nil {
@@ -221,11 +219,9 @@ func (self *DownloadHandler) ProcessLink(link string) {
 		if err != nil {
 			log.Println("proxy", err)
 			self.proxyDownloadedPageFailedCount += 1
-			downloader.failCount += 1
 			html, err = self.Downloader.Download(link)
 		} else {
 			self.proxyDownloadedPageCount += 1
-			downloader.successCount += 1
 		}
 	} else {
 		html, err = self.Downloader.Download(link)
@@ -325,6 +321,9 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.proxyDownloadedPageCount = 0
 	ret.writePageCount = 0
 	for _, proxy := range GetProxyList() {
+		if rand.Float64() < 0.5 {
+			continue
+		}
 		pd := NewHTTPGetProxyDownloader(proxy)
 		if pd == nil {
 			continue
