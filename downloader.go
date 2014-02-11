@@ -206,12 +206,6 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	}
 	log.Println("begin : ", link)
 	self.processedPageCount += 1
-	if self.processedPageCount > 500 {
-		if CheckBloomFilter(link) {
-			log.Println("downloaded before : ", link)
-		}
-	}
-	SetBloomFilter(link)
 	html := ""
 	var err error
 	downloader := self.GetProxyDownloader()
