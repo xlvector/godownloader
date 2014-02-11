@@ -169,7 +169,8 @@ func (self *DownloadHandler) FlushPages() {
 		self.WritePage(page)
 		self.flushFileSize += 1
 
-		if self.flushFileSize%ConfigInstance().WritePageFreq == 0 {
+		writePageFreq := ConfigInstance().WritePageFreq
+		if writePageFreq > 0 && self.flushFileSize%writePageFreq == 0 {
 			self.writer.Close()
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 			var err error
