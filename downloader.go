@@ -316,9 +316,6 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.proxyDownloadedPageCount = 0
 	ret.writePageCount = 0
 	for _, proxy := range GetProxyList() {
-		if rand.Float64() < 0.5 {
-			continue
-		}
 		pd := NewHTTPGetProxyDownloader(proxy)
 		if pd == nil {
 			continue
