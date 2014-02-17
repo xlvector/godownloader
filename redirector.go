@@ -94,8 +94,10 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			if priority <= 0 {
 				continue
 			}
-			if self.processedLinks.Contains(link) {
-				continue
+			if rand.Float64() > 0.1 {
+				if self.processedLinks.Contains(link) {
+					continue
+				}
 			}
 			if rand.Float64() < 0.5 && priority == 1 {
 				continue
