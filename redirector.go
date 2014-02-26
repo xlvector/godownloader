@@ -43,7 +43,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 	for link := range self.linksChannel[ci] {
 		n += 1
 		log.Println("redirect : ", link)
-
+		SetBloomFilter(link)
 		pb := PostBody{}
 		pb.Links = []string{link}
 		jsonBlob, err := json.Marshal(&pb)
@@ -108,7 +108,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 					log.Println("downloaded before : ", link)
 					continue
 				}
-				SetBloomFilter(link)
+
 				log.Println("channel ", ci, " recv link : ", link, ExtractMainDomain(link))
 				self.processedLinks.Add(link)
 				self.linksChannel[ci] <- link
