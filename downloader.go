@@ -192,12 +192,13 @@ func (self *DownloadHandler) GetProxyDownloader() *HTTPGetDownloader {
 }
 
 func (self *DownloadHandler) UseProxy(link string) bool {
-	domain := ExtractMainDomain(link)
+	return true
+	/*domain := ExtractMainDomain(link)
 	if strings.Contains(domain, "edu.cn") || strings.Contains(domain, "gov.cn") {
 		return false
 	} else {
 		return true
-	}
+	}*/
 }
 
 func (self *DownloadHandler) ProcessLink(link string) {
