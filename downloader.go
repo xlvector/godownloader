@@ -89,7 +89,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 		return "", err
 	} else {
 		defer resp.Body.Close()
-		if !strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
+		if !strings.Contains(resp.Header.Get("Content-Type"), "text/") {
 			return "", errors.New("non html page")
 		}
 
