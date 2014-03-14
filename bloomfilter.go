@@ -1,19 +1,15 @@
 package downloader
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"strconv"
 	"strings"
-	"syscall"
+	"time"
 )
 
 type BloomFilter struct {
-	h        []byte
+	h        []uint16
 	size     int32
 	saveChan chan int
 }
@@ -35,68 +31,31 @@ func Hash(buf string) int32 {
 	return h
 }
 
+func GetDayTimeStamp() uint16 {
+	beginTime := time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+	nowTime := time.Now().Unix()
+	return (uint16)((nowTime - beginTime) / (24 * 3600))
+}
+
 func NewBloomFilter() *BloomFilter {
 	bf := BloomFilter{}
-	bf.size = 1000000000
-	bf.h = make([]byte, bf.size)
+	bf.size = 500000000
+	bf.h = make([]uint16, bf.size)
 	for i := int32(0); i < bf.size; i++ {
-		bf.h[i] = 0
+		bf.h[i] = uint16(0)
 	}
-	bf.Load()
 	return &bf
-}
-
-func (self *BloomFilter) Save() {
-	f, err := os.Create("filter.data")
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	for i, val := range self.h {
-		if val == 1 {
-			f.WriteString(strconv.Itoa(i) + "\n")
-		}
-	}
-}
-
-func (self *BloomFilter) Load() {
-	f, err := os.Open("filter.data")
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	r := bufio.NewReader(f)
-	n := 0
-	for {
-		line, err := r.ReadString('\n')
-		if err != nil {
-			break
-		}
-		ha, err := strconv.Atoi(strings.Trim(line, "\n"))
-		if err != nil {
-			fmt.Println(err)
-		}
-		self.h[ha] = 1
-		n += 1
-	}
-	fmt.Println("lines", n)
-	n = 0
-	for _, v := range self.h {
-		n += int(v)
-	}
-	fmt.Println("lines", n)
 }
 
 func (self *BloomFilter) Add(buf string) {
 	ha := Hash(buf)
-	self.h[ha%self.size] = 1
+	self.h[ha%self.size] = GetDayTimeStamp()
 }
 
 func (self *BloomFilter) Contains(buf string) bool {
 	ha := Hash(buf)
-	if self.h[ha%self.size] == 1 {
+	currentDay := GetDayTimeStamp()
+	if (currentDay - self.h[ha%self.size]) < 5 {
 		return true
 	} else {
 		return false
@@ -104,20 +63,12 @@ func (self *BloomFilter) Contains(buf string) bool {
 }
 
 type BloomFilterHandler struct {
-	filter  *BloomFilter
-	signals chan os.Signal
+	filter *BloomFilter
 }
 
 func NewBloomFilterHandler() *BloomFilterHandler {
 	ret := BloomFilterHandler{}
 	ret.filter = NewBloomFilter()
-	ret.signals = make(chan os.Signal, 1)
-	signal.Notify(ret.signals, syscall.SIGINT)
-	go func() {
-		<-ret.signals
-		ret.filter.Save()
-		os.Exit(0)
-	}()
 	return &ret
 }
 

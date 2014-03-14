@@ -1,12 +1,14 @@
 package downloader
 
 import (
+	"bufio"
 	"crawler/downloader/graphite"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -17,6 +19,7 @@ type RedirectorHandler struct {
 	urlFilter      *URLFilter
 	dnsCache       map[string]string
 	usedChannels   map[int]int64
+	writer         *os.File
 }
 
 func (self *RedirectorHandler) Match(link string) int {
@@ -70,10 +73,51 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.processedLinks = NewBloomFilter()
 	ret.usedChannels = make(map[int]int64)
 	ret.urlFilter = NewURLFilter()
+	ret.BatchAddLinkFromFile()
+	ret.writer, _ = os.Create("links.tsv")
 	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
 		go ret.Redirect(i)
 	}
 	return &ret
+}
+
+func (self *RedirectorHandler) BatchAddLinkFromFile() {
+	f, err := os.Open("links.tsv")
+	defer f.Close()
+	if err != nil {
+		return
+	}
+	reader := bufio.NewReader(f)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			break
+		}
+		self.AddLink(line)
+	}
+}
+
+func (self *RedirectorHandler) AddLink(link string) {
+	priority := self.Match(link)
+	if priority <= 0 {
+		return
+	}
+	ci := Hash(ExtractMainDomain(link))%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
+	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
+		if CheckBloomFilter(link) {
+			log.Println("downloaded before : ", link)
+			return
+		}
+
+		log.Println("channel ", ci, " recv link : ", link, ExtractMainDomain(link))
+		self.processedLinks.Add(link)
+		self.linksChannel[ci] <- link
+		self.usedChannels[int(ci)] = time.Now().Unix()
+	} else {
+		if self.writer != nil {
+			self.writer.WriteString(link + "\n")
+		}
+	}
 }
 
 func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -89,31 +133,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-
-			priority := self.Match(link)
-			if priority <= 0 {
-				continue
-			}
-			if rand.Float64() > 0.1 {
-				if self.processedLinks.Contains(link) {
-					continue
-				}
-			}
-			if rand.Float64() < 0.5 && priority == 1 {
-				continue
-			}
-			ci := Hash(ExtractMainDomain(link))%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
-			if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
-				if CheckBloomFilter(link) {
-					log.Println("downloaded before : ", link)
-					continue
-				}
-
-				log.Println("channel ", ci, " recv link : ", link, ExtractMainDomain(link))
-				self.processedLinks.Add(link)
-				self.linksChannel[ci] <- link
-				self.usedChannels[int(ci)] = time.Now().Unix()
-			}
+			self.AddLink(link)
 		}
 	}
 
