@@ -20,6 +20,7 @@ type RedirectorHandler struct {
 	dnsCache       map[string]string
 	usedChannels   map[int]int64
 	writer         *os.File
+	writeCount     int
 }
 
 func (self *RedirectorHandler) Match(link string) int {
@@ -75,6 +76,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.urlFilter = NewURLFilter()
 	ret.BatchAddLinkFromFile()
 	ret.writer, _ = os.Create("links.tsv")
+	ret.writeCount = 0
 	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
 		go ret.Redirect(i)
 	}
@@ -114,8 +116,9 @@ func (self *RedirectorHandler) AddLink(link string) {
 		self.linksChannel[ci] <- link
 		self.usedChannels[int(ci)] = time.Now().Unix()
 	} else {
-		if self.writer != nil {
+		if self.writer != nil && rand.Float64() < 0.1 && self.writeCount < 100000 {
 			self.writer.WriteString(link + "\n")
+			self.writeCount += 1
 		}
 	}
 }
