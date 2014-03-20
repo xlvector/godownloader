@@ -23,11 +23,11 @@ type Config struct {
 }
 
 type LinkConfig struct {
-	id       int    `json:"id"`
-	name     string `json:"name"`
-	pattern  string `json:"pattern"`
-	link     string `json:"link"`
-	priority int    `json:"priority"`
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	Pattern  string `json:"pattern"`
+	Link     string `json:"link"`
+	Priority int    `json:"priority"`
 }
 
 type LinkConfigArray []LinkConfig
@@ -71,11 +71,11 @@ func NewConfig(path string) *Config {
 
 	for _, link := range links {
 		log.Println("links-tool", link)
-		pb.Links = append(pb.Links, link.link)
-		if link.priority == 1 {
-			config.HighPrioritySitePatterns = append(config.HighPrioritySitePatterns, link.pattern)
-		} else if link.priority == 2 {
-			config.SitePatterns = append(config.SitePatterns, link.pattern)
+		pb.Links = append(pb.Links, link.Link)
+		if link.Priority == 1 {
+			config.HighPrioritySitePatterns = append(config.HighPrioritySitePatterns, link.Pattern)
+		} else if link.Priority == 2 {
+			config.SitePatterns = append(config.SitePatterns, link.Pattern)
 		}
 	}
 	jsonBlob, err := json.Marshal(&pb)
