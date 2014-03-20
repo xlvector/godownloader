@@ -52,7 +52,7 @@ func NewConfig(path string) *Config {
 		panic(err)
 	}
 
-	downloader := NewHTTPGetProxyDownloader("http://10.181.10.21")
+	downloader := NewDefaultHTTPGetProxyDownloader("http://10.181.10.21")
 	linksJson, err := downloader.Download("http://10.105.75.102/pagemining-tools/links/list.php")
 	links := []LinkConfig{}
 	err = json.Unmarshal([]byte(linksJson), &links)

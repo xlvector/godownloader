@@ -77,6 +77,22 @@ func NewHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
 	return &ret
 }
 
+func NewDefaultHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
+	ret := HTTPGetDownloader{}
+	ret.cleaner = nil
+	proxyUrl, err := url.Parse(proxy)
+	if err != nil {
+		return nil
+	}
+	ret.client = &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+			Proxy:             http.ProxyURL(proxyUrl),
+		},
+	}
+	return &ret
+}
+
 func (self *HTTPGetDownloader) Download(url string) (string, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
@@ -97,12 +113,16 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 		if err != nil {
 			return "", err
 		} else {
-			utf8Html := self.cleaner.ToUTF8(html)
-			if utf8Html == nil {
-				return "", errors.New("conver to utf8 error")
+			if self.cleaner != nil {
+				utf8Html := self.cleaner.ToUTF8(html)
+				if utf8Html == nil {
+					return "", errors.New("conver to utf8 error")
+				}
+				cleanHtml := self.cleaner.CleanHTML(utf8Html)
+				return string(cleanHtml), nil
+			} else {
+				return string(html), nil
 			}
-			cleanHtml := self.cleaner.CleanHTML(utf8Html)
-			return string(cleanHtml), nil
 		}
 	}
 }
