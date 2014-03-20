@@ -54,6 +54,10 @@ func NewConfig(path string) *Config {
 
 	downloader := NewDefaultHTTPGetProxyDownloader("http://10.181.10.21")
 	linksJson, err := downloader.Download("http://10.105.75.102/pagemining-tools/links/list.php")
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(linksJson)
 	links := []LinkConfig{}
 	err = json.Unmarshal([]byte(linksJson), &links)
 	if err != nil {

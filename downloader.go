@@ -105,7 +105,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, error) {
 		return "", err
 	} else {
 		defer resp.Body.Close()
-		if !strings.Contains(resp.Header.Get("Content-Type"), "text/") {
+		if !strings.Contains(resp.Header.Get("Content-Type"), "text/") && !strings.Contains(resp.Header.Get("Content-Type"), "json") {
 			return "", errors.New("non html page")
 		}
 
