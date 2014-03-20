@@ -63,6 +63,7 @@ func NewConfig(path string) *Config {
 	if err != nil {
 		panic(err)
 	}
+	log.Println(links)
 	pb := PostBody{}
 	pb.Links = []string{}
 
@@ -79,7 +80,7 @@ func NewConfig(path string) *Config {
 	if err == nil {
 		req := make(map[string]string)
 		req["links"] = string(jsonBlob)
-		PostHTTPRequest(ConfigInstance().RedirectorHost, req)
+		PostHTTPRequest(config.RedirectorHost, req)
 	}
 	return &config
 }
