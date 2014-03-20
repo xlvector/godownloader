@@ -22,6 +22,14 @@ type Config struct {
 	WritePageFreq            int      `json:"write_page_freq"`
 }
 
+type LinkConfig struct {
+	id       int
+	name     string
+	pattern  string
+	link     string
+	priority int
+}
+
 func NewDefaultConfig() *Config {
 	config := Config{
 		PagePerMinute:   10,
@@ -43,6 +51,31 @@ func NewConfig(path string) *Config {
 	if err != nil {
 		panic(err)
 	}
+
+	downloader := NewHTTPGetProxyDownloader("http://10.181.10.21")
+	linksJson, err := downloader.Download("http://10.105.75.102/pagemining-tools/links/list.php")
+	links := []LinkConfig{}
+	err = json.Unmarshal([]byte(linksJson), &links)
+	if err != nil {
+		panic(err)
+	}
+	pb := PostBody{}
+	pb.Links = []string{}
+
+	for _, link := range links {
+		pb.Links = append(pb.Links, link.link)
+		if link.priority == 1 {
+			config.HighPrioritySitePatterns = append(config.HighPrioritySitePatterns, link.pattern)
+		} else if link.priority == 2 {
+			config.SitePatterns = append(config.SitePatterns, link.pattern)
+		}
+	}
+	jsonBlob, err := json.Marshal(&pb)
+	if err == nil {
+		req := make(map[string]string)
+		req["links"] = string(jsonBlob)
+		PostHTTPRequest(ConfigInstance().RedirectorHost, req)
+	}
 	return &config
 }
 
@@ -52,9 +85,9 @@ var lastLoadConfigTime int64
 
 func ConfigInstance() *Config {
 	now := time.Now().Unix()
-	if configInstance == nil || (now-lastLoadConfigTime) > 600 {
+	if configInstance == nil || (now-lastLoadConfigTime) > 60 {
 		lock.Lock()
-		if configInstance == nil || (now-lastLoadConfigTime) > 600 {
+		if configInstance == nil || (now-lastLoadConfigTime) > 60 {
 			configInstance = NewConfig("config.json")
 			log.Println("load config file")
 			lastLoadConfigTime = time.Now().Unix()
