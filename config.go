@@ -30,6 +30,8 @@ type LinkConfig struct {
 	priority int    `json:"priority"`
 }
 
+type LinkConfigArray []LinkConfig
+
 func NewDefaultConfig() *Config {
 	config := Config{
 		PagePerMinute:   10,
@@ -58,7 +60,7 @@ func NewConfig(path string) *Config {
 		log.Println(err)
 	}
 	log.Println(linksJson)
-	links := []LinkConfig{}
+	var links LinkConfigArray
 	err = json.Unmarshal([]byte(linksJson), &links)
 	if err != nil {
 		panic(err)
