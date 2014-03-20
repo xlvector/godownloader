@@ -23,11 +23,11 @@ type Config struct {
 }
 
 type LinkConfig struct {
-	id       int
-	name     string
-	pattern  string
-	link     string
-	priority int
+	id       int    `json:"id"`
+	name     string `json:"name"`
+	pattern  string `json:"pattern"`
+	link     string `json:"link"`
+	priority int    `json:"priority"`
 }
 
 func NewDefaultConfig() *Config {
