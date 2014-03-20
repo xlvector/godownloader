@@ -63,6 +63,7 @@ func NewConfig(path string) *Config {
 	pb.Links = []string{}
 
 	for _, link := range links {
+		log.Println("links-tool", link)
 		pb.Links = append(pb.Links, link.link)
 		if link.priority == 1 {
 			config.HighPrioritySitePatterns = append(config.HighPrioritySitePatterns, link.pattern)
