@@ -59,6 +59,12 @@ type LinkConfig struct {
 }
 type LinkConfigArray []LinkConfig
 
+type TemplateConfig struct {
+	Pattern string `json:"_pattern"`
+	Link    string `json:"_link"`
+}
+type TemplateConfigArray []TemplateConfig
+
 func GetNewPatterns() map[string]int {
 	log.Println("addlinkconfig")
 	downloader := NewDefaultHTTPGetProxyDownloader("http://10.181.10.21")
@@ -89,6 +95,23 @@ func GetNewPatterns() map[string]int {
 		}
 		ret[link.Pattern] = link.Priority
 	}
+
+	linksJson, err = downloader.Download("http://10.105.75.102/pagemining-tools/template_json.php")
+	if err != nil {
+		log.Println("addlinkconfig", err)
+	}
+	var templateLinks TemplateConfigArray
+	err = json.Unmarshal([]byte(linksJson), &templateLinks)
+	if err != nil {
+		log.Println(err)
+		return ret
+	}
+	log.Println(templateLinks)
+	for _, link := range templateLinks {
+		pb.Links = append(pb.Links, link.Link)
+		ret[link.Pattern] = 2
+	}
+
 	jsonBlob, err := json.Marshal(&pb)
 	if err == nil {
 		req := make(map[string]string)
