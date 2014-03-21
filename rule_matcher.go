@@ -1,6 +1,8 @@
 package downloader
 
 import (
+	"encoding/json"
+	"log"
 	"math/rand"
 	"regexp"
 	"strings"
