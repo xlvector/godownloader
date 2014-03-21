@@ -18,18 +18,7 @@ type Config struct {
 	RedirectChanNum          int      `json:"redirect_chan_num"`
 	RedirectChanSize         int      `json:"redirect_chan_size"`
 	WritePageFreq            int      `json:"write_page_freq"`
-	
 }
-
-type LinkConfig struct {
-	Id       int    `json:"id"`
-	Name     string `json:"name"`
-	Pattern  string `json:"pattern"`
-	Link     string `json:"link"`
-	Priority int    `json:"priority"`
-}
-
-type LinkConfigArray []LinkConfig
 
 func NewDefaultConfig() *Config {
 	config := Config{
@@ -38,38 +27,6 @@ func NewDefaultConfig() *Config {
 		RedirectChanNum: 10,
 	}
 	return &config
-}
-
-func GetNewPatterns() map[string]int{
-     log.Println("addlinkconfig")
-	downloader := NewDefaultHTTPGetProxyDownloader("http://10.181.10.21")
-	linksJson, err := downloader.Download("http://10.105.75.102/pagemining-tools/links/list.php")
-	if err != nil {
-		log.Println("addlinkconfig", err)
-	}
-	ret := make(map[string]int)
-	log.Println(linksJson)
-	var links LinkConfigArray
-	err = json.Unmarshal([]byte(linksJson), &links)
-	if err != nil {
-		log.Println(err)
-		return ret
-	}
-	log.Println(links)
-	pb := PostBody{}
-	pb.Links = []string{}
-	for _, link := range links {
-		log.Println("links-tool", link)
-		pb.Links = append(pb.Links, link.Link)
-		ret[link.Pattern] = link.Priority
-	}
-	jsonBlob, err := json.Marshal(&pb)
-	if err == nil {
-		req := make(map[string]string)
-		req["links"] = string(jsonBlob)
-		PostHTTPRequest(ConfigInstance().RedirectorHost, req)
-	}		
-	return ret
 }
 
 func NewConfig(path string) *Config {
