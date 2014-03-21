@@ -381,6 +381,7 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		ExtractedChannelLength: len(self.ExtractedLinksChannel),
 	}
 	if rand.Float64() < 0.1 {
+	   
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".postchannelsize", int64(ret.PostChannelLength), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(self.flushFileSize), 1.0)
