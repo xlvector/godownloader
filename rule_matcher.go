@@ -48,11 +48,14 @@ func (self *RuleMatcher) AddRule(rule string, priority int) {
 }
 
 type LinkConfig struct {
-	Id       int    `json:"id"`
-	Name     string `json:"name"`
-	Pattern  string `json:"pattern"`
-	Link     string `json:"link"`
-	Priority int    `json:"priority"`
+	Id        int    `json:"id"`
+	Name      string `json:"name"`
+	Pattern   string `json:"pattern"`
+	Link      string `json:"link"`
+	Priority  int    `json:"priority"`
+	Entrance1 string `json:"entrance_1"`
+	Entrance2 string `json:"entrance_2"`
+	Entrance3 string `json:"entrance_3"`
 }
 type LinkConfigArray []LinkConfig
 
@@ -75,6 +78,15 @@ func GetNewPatterns() map[string]int {
 	pb.Links = []string{}
 	for _, link := range links {
 		pb.Links = append(pb.Links, link.Link)
+		if len(link.Entrance1) > 0 {
+			pb.Links = append(pb.Links, link.Entrance1)
+		}
+		if len(link.Entrance2) > 0 {
+			pb.Links = append(pb.Links, link.Entrance2)
+		}
+		if len(link.Entrance3) > 0 {
+			pb.Links = append(pb.Links, link.Entrance3)
+		}
 		ret[link.Pattern] = link.Priority
 	}
 	jsonBlob, err := json.Marshal(&pb)
