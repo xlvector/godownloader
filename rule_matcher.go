@@ -16,9 +16,10 @@ type Rule struct {
 type RuleList []Rule
 
 type RuleMatcher struct {
-	SiteRules   map[string]RuleList
-	CommonRules RuleList
-	usedRules   map[string]bool
+	SiteRules    map[string]RuleList
+	CommonRules  RuleList
+	usedRules    map[string]bool
+	refreshTimes int
 }
 
 func NewRuleMatcher() *RuleMatcher {
