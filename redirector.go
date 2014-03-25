@@ -104,14 +104,15 @@ func (self *RedirectorHandler) AddLink(link string) {
 	if priority <= 0 {
 		return
 	}
-	ci := Hash(ExtractMainDomain(link))%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
+	addr := LoopUpHost(link)
+	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 		if CheckBloomFilter(link) {
 			log.Println("downloaded before : ", link)
 			return
 		}
 
-		log.Println("channel ", ci, " recv link : ", link, ExtractMainDomain(link))
+		log.Println("channel ", ci, " recv link : ", link, addr)
 		self.processedLinks.Add(link)
 		self.linksChannel[ci] <- link
 		self.usedChannels[int(ci)] = time.Now().Unix()

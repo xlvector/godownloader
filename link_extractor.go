@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"net"
 	"strings"
 )
 
@@ -23,6 +24,16 @@ func ExtractDomain(path string) string {
 	}
 	ret := tks[0] + "//" + tks[2]
 	return ret
+}
+
+func LoopUpHost(path string) string {
+	host := ExtractDomain(path)
+	addrs, _ := net.LookupHost(host)
+	if len(addrs) > 0 {
+		return addrs[0]
+	} else {
+		return ExtractMainDomain(path)
+	}
 }
 
 func ExtractMainDomain(path string) string {
