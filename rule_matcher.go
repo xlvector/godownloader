@@ -79,7 +79,6 @@ func GetNewPatterns() map[string]int {
 		log.Println(err)
 		return ret
 	}
-	log.Println(links)
 	pb := PostBody{}
 	pb.Links = []string{}
 	for _, link := range links {
@@ -106,7 +105,6 @@ func GetNewPatterns() map[string]int {
 		log.Println(err)
 		return ret
 	}
-	log.Println(templateLinks)
 	for _, link := range templateLinks {
 		pb.Links = append(pb.Links, link.Link)
 		ret[link.Pattern] = 2
