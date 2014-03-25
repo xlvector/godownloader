@@ -93,35 +93,38 @@ func NewDefaultHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
 	return &ret
 }
 
-func (self *HTTPGetDownloader) Download(url string) (string, error) {
+func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
-		return "", err
+		return "", "", err
 	}
 	req.Header.Set("User-Agent", USER_AGENT)
 	resp, err := self.client.Do(req)
 
+	respInfo := ""
 	if err != nil || resp == nil || resp.Body == nil {
-		return "", err
+		return "", "", err
 	} else {
+		respInfo += "<real_url>" + resp.Request.URL.String() + "</real_url>"
+		respInfo += "<content_type>" + resp.Header.Get("Content-Type") + "</content_type>"
 		defer resp.Body.Close()
 		if !strings.Contains(resp.Header.Get("Content-Type"), "text/") && !strings.Contains(resp.Header.Get("Content-Type"), "json") {
-			return "", errors.New("non html page")
+			return "", "", errors.New("non html page")
 		}
-
+		cleanRespInfo := string(self.cleaner.CleanHTML([]byte(respInfo)))
 		html, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return "", err
+			return "", "", err
 		} else {
 			if self.cleaner != nil {
 				utf8Html := self.cleaner.ToUTF8(html)
 				if utf8Html == nil {
-					return "", errors.New("conver to utf8 error")
+					return "", "", errors.New("conver to utf8 error")
 				}
 				cleanHtml := self.cleaner.CleanHTML(utf8Html)
-				return string(cleanHtml), nil
+				return string(cleanHtml), cleanRespInfo, nil
 			} else {
-				return string(html), nil
+				return string(html), cleanRespInfo, nil
 			}
 		}
 	}
@@ -140,6 +143,7 @@ type Response struct {
 type WebPage struct {
 	Link         string
 	Html         string
+	RespInfo     string
 	DownloadedAt int64
 }
 
@@ -228,19 +232,20 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	log.Println("begin : ", link)
 	self.processedPageCount += 1
 	html := ""
+	resp := ""
 	var err error
 	downloader := self.GetProxyDownloader()
 	if self.UseProxy(link) && downloader != nil {
-		html, err = downloader.Download(link)
+		html, resp, err = downloader.Download(link)
 		if err != nil {
 			log.Println("proxy", err)
 			self.proxyDownloadedPageFailedCount += 1
-			html, err = self.Downloader.Download(link)
+			html, resp, err = self.Downloader.Download(link)
 		} else {
 			self.proxyDownloadedPageCount += 1
 		}
 	} else {
-		html, err = self.Downloader.Download(link)
+		html, resp, err = self.Downloader.Download(link)
 	}
 
 	if err != nil {
@@ -257,7 +262,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 		return
 	}
 	log.Println("finish : ", link)
-	page := WebPage{Link: link, Html: html, DownloadedAt: time.Now().Unix()}
+	page := WebPage{Link: link, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
 
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
 		self.PageChannel <- page
@@ -381,7 +386,7 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		ExtractedChannelLength: len(self.ExtractedLinksChannel),
 	}
 	if rand.Float64() < 0.1 {
-	   
+
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".postchannelsize", int64(ret.PostChannelLength), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".extractchannelsize", int64(ret.ExtractedChannelLength), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".cachesize", int64(self.flushFileSize), 1.0)

@@ -69,7 +69,7 @@ type TemplateConfigArray []TemplateConfig
 func GetNewPatterns() map[string]int {
 	log.Println("addlinkconfig")
 	downloader := NewDefaultHTTPGetProxyDownloader("http://10.181.10.21")
-	linksJson, err := downloader.Download("http://10.105.75.102/pagemining-tools/links/list.php")
+	linksJson, _, err := downloader.Download("http://10.105.75.102/pagemining-tools/links/list.php")
 	if err != nil {
 		log.Println("addlinkconfig", err)
 	}
@@ -96,7 +96,7 @@ func GetNewPatterns() map[string]int {
 		ret[link.Pattern] = link.Priority
 	}
 
-	linksJson, err = downloader.Download("http://10.105.75.102/pagemining-tools/template_json.php")
+	linksJson, _, err = downloader.Download("http://10.105.75.102/pagemining-tools/template_json.php")
 	if err != nil {
 		log.Println("addlinkconfig", err)
 	}
