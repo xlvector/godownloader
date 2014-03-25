@@ -184,6 +184,8 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	self.writer.WriteString(page.Link)
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.Html)
+	self.writer.WriteString("\t")
+	self.writer.WriteString(page.RespInfo)
 	self.writer.WriteString("\n")
 	log.Println("write : ", page.Link)
 }
