@@ -103,7 +103,7 @@ func (self *RedirectorHandler) AddLink(link string) {
 	if priority <= 0 {
 		return
 	}
-	addr := ExtractDomain(link)
+	addr := ExtractMainDomain(link)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 		if CheckBloomFilter(link) {
