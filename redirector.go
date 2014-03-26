@@ -47,7 +47,6 @@ func (self *RedirectorHandler) Redirect(ci int) {
 	for link := range self.linksChannel[ci] {
 		n += 1
 		log.Println("redirect : ", link)
-		SetBloomFilter(link)
 		pb := PostBody{}
 		pb.Links = []string{link}
 		jsonBlob, err := json.Marshal(&pb)

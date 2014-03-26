@@ -178,6 +178,8 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 		return
 	}
 
+	SetBloomFilter(page.Link)
+
 	self.writePageCount += 1
 	self.writer.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
 	self.writer.WriteString("\t")

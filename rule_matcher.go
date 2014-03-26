@@ -80,18 +80,20 @@ func GetNewPatterns() map[string]int {
 		log.Println(err)
 		return ret
 	}
-	pb := PostBody{}
-	pb.Links = []string{}
+	downloadPb := PostBody{}
+	redirectPb := PostBody{}
+	downloadPb.Links = []string{}
+	redirectPb.Links = []string{}
 	for _, link := range links {
-		pb.Links = append(pb.Links, link.Link)
+		redirectPb.Links = append(redirectPb.Links, link.Link)
 		if len(link.Entrance1) > 0 {
-			pb.Links = append(pb.Links, link.Entrance1)
+			downloadPb.Links = append(downloadPb.Links, link.Entrance1)
 		}
 		if len(link.Entrance2) > 0 {
-			pb.Links = append(pb.Links, link.Entrance2)
+			downloadPb.Links = append(downloadPb.Links, link.Entrance2)
 		}
 		if len(link.Entrance3) > 0 {
-			pb.Links = append(pb.Links, link.Entrance3)
+			downloadPb.Links = append(downloadPb.Links, link.Entrance3)
 		}
 		ret[link.Pattern] = link.Priority
 	}
@@ -107,11 +109,18 @@ func GetNewPatterns() map[string]int {
 		return ret
 	}
 	for _, link := range templateLinks {
-		pb.Links = append(pb.Links, link.Link)
+		redirectPb.Links = append(redirectPb.Links, link.Link)
 		ret[link.Pattern] = 2
 	}
 
-	jsonBlob, err := json.Marshal(&pb)
+	jsonBlob, err := json.Marshal(&redirectPb)
+	if err == nil {
+		req := make(map[string]string)
+		req["links"] = string(jsonBlob)
+		PostHTTPRequest(ConfigInstance().RedirectorHost, req)
+	}
+
+	jsonBlob, err = json.Marshal(&downloadPb)
 	if err == nil {
 		req := make(map[string]string)
 		req["links"] = string(jsonBlob)
