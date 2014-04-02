@@ -64,6 +64,7 @@ type TemplateConfig struct {
 	Pattern string `json:"_pattern"`
 	Link    string `json:"_link"`
 }
+
 type TemplateConfigArray []TemplateConfig
 
 func GetNewPatterns() map[string]int {

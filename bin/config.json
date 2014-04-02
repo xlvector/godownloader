@@ -1,7 +1,7 @@
 {
-	"downloader_host" : "http://10.181.10.52/download",
-	"redirector_host" : "http://10.181.10.50:8100/redirect",
-	"filter_host" : "http://10.181.10.51:8100/filter",
+	"downloader_host" : "http://127.0.0.1:9090/download",
+	"redirector_host" : "http://127.0.0.1:8100/redirect",
+	"filter_host" : "http://127.0.0.1:8200/filter",
 	"graphite_host" : "10.181.10.25:8125",
 	"site_patterns" : [
 		"http://www.cdcredit.gov.cn/.*",
@@ -159,9 +159,9 @@
 		"http://[a-z0-9]+.qiyexinyong.org[/]*.*",
 		"http://[a-z0-9]+.36yc.com/.*"
 	],
-	"page_per_minute" : 200,
+	"page_per_minute" : 20,
 	"download_timeout" : 10,
-	"redirect_chan_num" : 1200,
-	"redirect_chan_size" : 10000,
-	"write_page_freq" : 5000
+	"redirect_chan_num" : 120,
+	"redirect_chan_size" : 100,
+	"write_page_freq" : 50
 }
