@@ -1,0 +1,80 @@
+#!/bin/bash
+
+sudo pkill -9 nginx
+sudo /usr/local/nginx/sbin/nginx
+
+cd /data/crawler/
+
+echo "proxy"
+
+#python get_proxy.py > proxy.list
+
+echo "finish proxy"
+
+ssh -p 2222 10.181.10.50 "pkill -9 godl"
+ssh -p 2222 10.181.10.52 "pkill -9 godl"
+ssh -p 2222 10.181.10.53 "pkill -9 godl"
+ssh -p 2222 10.181.10.54 "pkill -9 godl"
+ssh -p 2222 10.181.10.55 "pkill -9 godl"
+
+cd /data/crawler
+rm -rf godl
+wget http://10.181.10.20/code/godl
+chmod a+x godl
+
+scp -P 2222 godl 10.181.10.50:/data/crawler
+#scp -P 2222 godl 10.181.10.51:/data/crawler
+scp -P 2222 godl 10.181.10.53:/data/crawler
+scp -P 2222 godl 10.181.10.54:/data/crawler
+scp -P 2222 godl 10.181.10.55:/data/crawler
+#scp godl 10.181.10.43:/data/crawler
+
+scp -P 2222 proxy.list 10.181.10.53:/data/crawler
+scp -P 2222 proxy.list 10.181.10.54:/data/crawler
+scp -P 2222 proxy.list 10.181.10.55:/data/crawler
+#scp proxy.list 10.181.10.43:/data/crawler
+
+scp -P 2222 config.json 10.181.10.50:/data/crawler
+scp -P 2222 config.json 10.181.10.53:/data/crawler
+scp -P 2222 config.json 10.181.10.54:/data/crawler
+scp -P 2222 config.json 10.181.10.55:/data/crawler
+#scp config.json 10.181.10.43:/data/crawler
+
+scp -P 2222 redirector.sh 10.181.10.50:/data/crawler
+scp -P 2222 start.sh 10.181.10.53:/data/crawler
+scp -P 2222 start.sh 10.181.10.54:/data/crawler
+scp -P 2222 start.sh 10.181.10.55:/data/crawler
+#scp start.sh 10.181.10.43:/data/crawler
+
+echo "begin start service"
+
+ssh -p 2222 10.181.10.50 "cd /data/crawler; chmod a+x godl; sh redirector.sh"
+sleep 10
+ssh -p 2222 10.181.10.52 "cd /data/crawler; chmod a+x godl; sh start.sh"
+ssh -p 2222 10.181.10.53 "cd /data/crawler; chmod a+x godl; sh start.sh"
+ssh -p 2222 10.181.10.54 "cd /data/crawler; chmod a+x godl; sh start.sh"
+ssh -p 2222 10.181.10.55 "cd /data/crawler; chmod a+x godl; sh start.sh"
+#ssh 10.181.10.43 "cd /data/crawler; sh start.sh"
+
+#ssh 10.181.10.52 "pkill -9 java; cd /data/crawler/flume; sh flume.sh"
+#ssh 10.181.10.53 "pkill -9 java; cd /data/crawler/flume; sh flume.sh"
+#ssh 10.181.10.54 "pkill -9 java; cd /data/crawler/flume; sh flume.sh"
+#ssh 10.181.10.55 "pkill -9 java; cd /data/crawler/flume; sh flume.sh"
+
+
+sleep 10
+echo "begin post"
+#ssh 10.181.10.50 "cd /data/crawler; python redirect.py > redirect.list"
+#sleep 10
+#scp crawler@10.181.10.50:/data/crawler/redirect.list ./
+#python post.py redirect.list
+
+#sleep 10
+python post.py seeds.list
+
+python court.py > court.list
+python post.py court.list
+python post.py baidu.list
+#curl -o redirect.list http://10.180.60.11/redirect.list
+#python post.py redirect.list
+
