@@ -22,3 +22,22 @@ func TestCleanHTML(t *testing.T) {
 		t.Error("clean html failed", ret)
 	}
 }
+
+func TestToUTF8(t *testing.T) {
+	html := `<html>
+				<head>
+					<title>字符测试</title>
+				</head>
+				<body>
+					字符测试
+				</body>
+			</html>`
+
+	cleaner := NewHTMLCleaner()
+
+	ret := cleaner.ToUTF8([]byte(html))
+
+	if ret == nil {
+		t.Error("ToUTF8 failed", ret)
+	}
+}

@@ -4,6 +4,30 @@ import (
 	"testing"
 )
 
+func TestExtractDomain(t *testing.T) {
+	domain := ExtractDomain("http://weibo.com/101174?from=feed&loc=nickname")
+	if domain != "http://weibo.com" {
+		t.Error("got wrong domain:", domain)
+	}
+
+	domain = ExtractDomain("http://10.105.75.10:9888/pages/viewpage.action?pageId=329001")
+	if domain != "http://10.105.75.10:9888" {
+		t.Error("got wrong domain:", domain)
+	}
+}
+
+func TestExtractMainDomain(t *testing.T) {
+	domain := ExtractMainDomain("http://j.news.163.com:80/#newsart")
+	if domain != "j.news.163.com:80" {
+		t.Error("got wrong domain:", domain)
+	}
+
+	domain = ExtractMainDomain("http://10.105.75.10:9888/pages/viewpage.action?pageId=329001")
+	if domain != "10.105.75.10:9888" {
+		t.Error("got wrong domain:", domain)
+	}
+}
+
 func TestExtractLinks(t *testing.T) {
 	html := `
 		<html>

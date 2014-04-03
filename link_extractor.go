@@ -36,13 +36,25 @@ func LoopUpHost(path string) string {
 	}
 }
 
+func checkDigit(sub string) bool {
+	for _, v := range sub {
+		if v < '0' || v > '9' {
+			return false
+		}
+	}
+	return true
+}
+
 func ExtractMainDomain(path string) string {
 	tks := strings.Split(path, "/")
 	if len(tks) < 3 {
 		return ""
 	}
 	tks2 := strings.Split(tks[2], ".")
+	tks3 := strings.Split(tks2[len(tks2)-1], ":")
 	if len(tks2) < 3 {
+		return tks[2]
+	} else if len(tks2) == 4 && checkDigit(tks2[2]) && checkDigit(tks3[0]) {
 		return tks[2]
 	} else {
 		ret := tks2[len(tks2)-2] + "." + tks2[len(tks2)-1]
