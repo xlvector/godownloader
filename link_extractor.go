@@ -57,7 +57,7 @@ func ExtractMainDomain(path string) string {
 	} else if len(tks2) == 4 && checkDigit(tks2[2]) && checkDigit(tks3[0]) {
 		return tks[2]
 	} else {
-		ret := tks2[len(tks2)-2] + "." + tks2[len(tks2)-1]
+		ret := tks2[len(tks2)-2] + "." + tks3[0]
 		if ret == "com.cn" || ret == "org.cn" || ret == "net.cn" || ret == "edu.cn" || ret == "gov.cn" {
 			ret = tks2[len(tks2)-3] + "." + ret
 		}
