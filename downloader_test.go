@@ -19,4 +19,13 @@ func TestHTTPGetDownloader(t *testing.T) {
 	if len(resp) < 50 {
 		t.Error("Response page is to small, ", resp)
 	}
+
+}
+
+func TestDownload(t *testing.T) {
+	downloader := NewHTTPGetDownloader()
+	html, _, _ := downloader.Download("http://www.baidu.com")
+
+	t.Error(html)
+
 }

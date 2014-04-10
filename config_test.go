@@ -17,6 +17,4 @@ func Test(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	//t.Error(links)
 }
