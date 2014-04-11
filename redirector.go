@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -151,6 +152,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			self.linksRecvCount += 1
 			if self.ruleMatcher.MatchRule(link) == 2 {
 				domain := ExtractMainDomain(link)
+				domain = strings.Replace(domain, ".", "_", -1)
 				self.domainLinksRecvCount[domain] += 1
 			}
 		}
