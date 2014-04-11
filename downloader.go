@@ -191,7 +191,7 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	self.writePageCount += 1
 	if self.ruleMatcher.MatchRule(page.Link) == 2 {
 		domain := ExtractMainDomain(page.Link)
-
+		domain = strings.Replace(domain, ".", "_", -1)
 		self.pageWriteCount[domain] += 1
 	}
 
@@ -274,7 +274,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 
 	if self.ruleMatcher.MatchRule(link) == 2 {
 		domain := ExtractMainDomain(link)
-
+		domain = strings.Replace(domain, ".", "_", -1)
 		self.pageDownloadCount[domain] += 1
 	}
 
@@ -411,6 +411,7 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		for _, link := range pb.Links {
 			if self.ruleMatcher.MatchRule(link) > 0 {
 				domain := ExtractMainDomain(link)
+				domain = strings.Replace(domain, ".", "_", -1)
 				self.linkRecvCount[domain] += 1
 			}
 
