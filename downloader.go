@@ -264,7 +264,9 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	self.totalDownloadedPageCount += 1
 
 	domain := ExtractDomain(link)
+	log.Println("do ExtracDomain:", link, domain)
 	if strings.Contains(domain, "baidu.com") {
+		log.Println("got baiduDownloadCount,", link, self.baiduDownloadCount)
 		self.baiduDownloadCount += 1
 	}
 
