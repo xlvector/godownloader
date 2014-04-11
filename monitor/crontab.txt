@@ -1,0 +1,6 @@
+#crontab on 10.181.10.52
+
+[crawler@s2g52 tmp]$ crontab -l
+#add by zhangjinglei 20140410, to monitor crawler via graphite
+55 23 * * * (cd /data/tmp && ./CrawlerReporter.py 1>>/data/tmp/CrawlerReporter.log 2>&1 &)
+

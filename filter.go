@@ -1,5 +1,9 @@
 package downloader
 
+import (
+	"log"
+)
+
 type URLFilter struct {
 	ruleMatcher *RuleMatcher
 }
@@ -17,5 +21,7 @@ func NewURLFilter() *URLFilter {
 }
 
 func (self *URLFilter) Match(link string) int {
+	log.Println("got link:", link, self.ruleMatcher.MatchRule(link))
+
 	return self.ruleMatcher.MatchRule(link)
 }

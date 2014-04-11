@@ -18,12 +18,17 @@ func TestExtractDomain(t *testing.T) {
 
 func TestExtractMainDomain(t *testing.T) {
 	domain := ExtractMainDomain("http://j.news.163.com:80/#newsart")
-	if domain != "j.news.163.com:80" {
+	if domain != "163.com" {
 		t.Error("got wrong domain:", domain)
 	}
 
 	domain = ExtractMainDomain("http://10.105.75.10:9888/pages/viewpage.action?pageId=329001")
 	if domain != "10.105.75.10:9888" {
+		t.Error("got wrong domain:", domain)
+	}
+
+	domain = ExtractMainDomain("http://news.sina.com.cn/pc/2014-04-02/326/3086.html")
+	if domain != "sina.com.cn" {
 		t.Error("got wrong domain:", domain)
 	}
 }

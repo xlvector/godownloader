@@ -13,14 +13,17 @@ import (
 )
 
 type RedirectorHandler struct {
-	metricSender   *graphite.Client
-	processedLinks *BloomFilter
-	linksChannel   []chan string
-	urlFilter      *URLFilter
-	dnsCache       map[string]string
-	usedChannels   map[int]int64
-	writer         *os.File
-	writeCount     int
+	metricSender         *graphite.Client
+	processedLinks       *BloomFilter
+	linksChannel         []chan string
+	urlFilter            *URLFilter
+	dnsCache             map[string]string
+	usedChannels         map[int]int64
+	writer               *os.File
+	writeCount           int
+	linksRecvCount       int
+	domainLinksRecvCount map[string]int
+	ruleMatcher          *RuleMatcher
 }
 
 func (self *RedirectorHandler) Match(link string) int {
@@ -76,6 +79,13 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.BatchAddLinkFromFile()
 	ret.writer, _ = os.Create("links.tsv")
 	ret.writeCount = 0
+	ret.linksRecvCount = 0
+	ret.domainLinksRecvCount = make(map[string]int)
+	ret.ruleMatcher = NewRuleMatcher()
+	for _, pt := range ConfigInstance().HighPrioritySitePatterns {
+		ret.ruleMatcher.AddRule(pt, 2)
+	}
+
 	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
 		go ret.Redirect(i)
 	}
@@ -137,6 +147,12 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 
 		for _, link := range pb.Links {
 			self.AddLink(link)
+
+			self.linksRecvCount += 1
+			if self.ruleMatcher.MatchRule(link) == 2 {
+				domain := ExtractMainDomain(link)
+				self.domainLinksRecvCount[domain] += 1
+			}
 		}
 	}
 
@@ -171,7 +187,11 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".maxchannelsize", int64(maxChannelSize), 1.0)
 		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".nonemptychannelcount", int64(nonEmptyQueueCount), 1.0)
 		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".usedchannelcount", int64(usedChannelCount), 1.0)
-
+		self.metricSender.Gauge("crawler.redirector."+GetHostName()+"."+Port+".linksRecvCount", int64(self.linksRecvCount), 1.0)
+		for domain, recvcount := range self.domainLinksRecvCount {
+			metricName := "crawler.redirector." + GetHostName() + "." + Port + ".domainLinksRecvCount." + domain
+			self.metricSender.Gauge(metricName, int64(recvcount), 1.0)
+		}
 	}
 	fmt.Fprint(w, "")
 }
