@@ -147,6 +147,10 @@ type WebPage struct {
 	DownloadedAt int64
 }
 
+type WebSiteStat struct {
+	baiduDownloadCount int
+}
+
 type DownloadHandler struct {
 	metricSender                   *graphite.Client
 	LinksChannel                   chan string
@@ -164,6 +168,7 @@ type DownloadHandler struct {
 	proxyDownloadedPageCount       int
 	proxyDownloadedPageFailedCount int
 	writePageCount                 int
+	WebSiteStat
 }
 
 func (self *DownloadHandler) WritePage(page WebPage) {
@@ -258,6 +263,11 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	}
 	self.totalDownloadedPageCount += 1
 
+	domain := ExtractDomain(link)
+	if strings.Contains(domain, "baidu.com") {
+		self.baiduDownloadCount += 1
+	}
+
 	if len(html) < 100 {
 		return
 	}
@@ -347,6 +357,7 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.totalDownloadedPageCount = 0
 	ret.proxyDownloadedPageCount = 0
 	ret.writePageCount = 0
+	ret.baiduDownloadCount = 0
 	for _, proxy := range GetProxyList() {
 		pd := NewHTTPGetProxyDownloader(proxy)
 		if pd == nil {
@@ -402,6 +413,7 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageCount", int64(self.proxyDownloadedPageCount), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageFailedCount", int64(self.proxyDownloadedPageFailedCount), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".writePageCount", int64(self.writePageCount), 1.0)
+		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".baiduDownloadCount", int64(self.baiduDownloadCount), 1.0)
 	}
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
