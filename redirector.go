@@ -195,5 +195,5 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			self.metricSender.Gauge(metricName, int64(recvcount), 1.0)
 		}
 	}
-	fmt.Fprint(w, "")
+	fmt.Fprint(w, "I have receive " + strconv.Itoa(len(links)) + " links")
 }
