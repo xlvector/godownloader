@@ -133,7 +133,7 @@ func GetSitePatterns() map[string]int {
 
 func (self *RuleMatcher) MatchRule(link string) int {
 	if(time.Now().Unix() - self.lastRefreshTime > 60) {
-		log.Println("refresh rules at", t)
+		log.Println("refresh rules at", time.Now())
 		newRules := GetSitePatterns()
 		for rule, pri := range newRules {
 			log.Println("add rule", rule, "with priority", pri)
