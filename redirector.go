@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const PRIORITY_LEVELS = 5
+
 type RedirectorHandler struct {
 	metricSender         *graphite.Client
 	processedLinks       *BloomFilter
@@ -70,7 +72,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret := RedirectorHandler{}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.linksChannel = []chan string{}
-	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
+	for i := 0; i < ConfigInstance().RedirectChanNum*PRIORITY_LEVELS; i++ {
 		ret.linksChannel = append(ret.linksChannel, make(chan string, ConfigInstance().RedirectChanSize))
 	}
 	ret.processedLinks = NewBloomFilter()
@@ -82,7 +84,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.linksRecvCount = 0
 	ret.domainLinksRecvCount = make(map[string]int)
 
-	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
+	for i := 0; i < ConfigInstance().RedirectChanNum*PRIORITY_LEVELS; i++ {
 		go ret.Redirect(i)
 	}
 	return &ret
