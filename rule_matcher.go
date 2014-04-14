@@ -114,7 +114,10 @@ func GetSitePatterns() map[string]int {
 	}
 	for _, link := range templateLinks {
 		redirectPb.Links = append(redirectPb.Links, link.Link)
-		ret[link.Pattern] = 2
+		_, ok := ret[link.Pattern]
+		if !ok {
+			ret[link.Pattern] = 2
+		}
 	}
 
 	jsonBlob, err := json.Marshal(&redirectPb)
