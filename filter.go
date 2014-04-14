@@ -20,8 +20,6 @@ func NewURLFilter() *URLFilter {
 	return &ret
 }
 
-func (self *URLFilter) Match(link string) int {
-	log.Println("got link:", link, self.ruleMatcher.MatchRule(link))
-
+func (self *URLFilter) Match(link string) int {s
 	return self.ruleMatcher.MatchRule(link)
 }

@@ -123,7 +123,7 @@ func (self *RedirectorHandler) AddLink(link string) {
 			return
 		}
 
-		log.Println("channel ", ci, " recv link : ", link, addr)
+		log.Println("channel", ci, "priority", priority, "recv link : ", link, addr)
 		self.processedLinks.Add(link)
 		self.linksChannel[ci] <- link
 		self.usedChannels[int(ci)] = time.Now().Unix()
@@ -196,5 +196,5 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			self.metricSender.Gauge(metricName, int64(recvcount), 1.0)
 		}
 	}
-	fmt.Fprint(w, "I have receive " + strconv.Itoa(len(links)) + " links")
+	fmt.Fprint(w, "thanks for your links")
 }
