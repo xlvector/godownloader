@@ -126,7 +126,7 @@ func (self *RedirectorHandler) AddLink(link string, isFilter string) {
 	addr := ExtractMainDomain(link)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
-		if isFilter == "true" && CheckBloomFilter(link) {
+		if isFilter != "false" && CheckBloomFilter(link) {
 			log.Println("downloaded before : ", link)
 			return
 		}
