@@ -19,23 +19,14 @@ type RuleMatcher struct {
 	SiteRules    map[string]RuleList
 	CommonRules  RuleList
 	usedRules    map[string]bool
-	ticker 		*time.Ticker
+	lastRefreshTime int64
 }
 
 func NewRuleMatcher() *RuleMatcher {
 	ret := RuleMatcher{}
 	ret.SiteRules = make(map[string]RuleList)
 	ret.usedRules = make(map[string]bool)
-	ret.ticker = time.NewTicker(60 * time.Second)
-	go func(){
-		for t := range ret.ticker.C {
-			log.Println("refresh rules at", t)
-			newRules := GetSitePatterns()
-			for rule, pri := range newRules {
-				ret.AddRule(rule, pri)
-			}
-		}
-	}()
+	ret.lastRefreshTime = time.Now().Unix()
 	return &ret
 }
 
@@ -141,6 +132,15 @@ func GetSitePatterns() map[string]int {
 }
 
 func (self *RuleMatcher) MatchRule(link string) int {
+	if(time.Now().Unix() - self.lastRefreshTime > 60) {
+		log.Println("refresh rules at", t)
+		newRules := GetSitePatterns()
+		for rule, pri := range newRules {
+			log.Println("add rule", rule, "with priority", pri)
+			self.AddRule(rule, pri)
+		}
+		self.lastRefreshTime = time.Now().Unix()
+	}
 	domain := ExtractMainDomain(link)
 	rules, ok := self.SiteRules[domain]
 	maxPriority := 0
