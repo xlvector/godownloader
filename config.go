@@ -11,13 +11,12 @@ type Config struct {
 	RedirectorHost           string   `json:"redirector_host"`
 	FilterHost               string   `json:"filter_host"`
 	GraphiteHost             string   `json:"graphite_host"`
-	SitePatterns             []string `json:"site_patterns"`
-	HighPrioritySitePatterns []string `json:"hp_site_patterns"`
 	PagePerMinute            int      `json:"page_per_minute"`
 	DownloadTimeout          int64    `json:"download_timeout"`
 	RedirectChanNum          int      `json:"redirect_chan_num"`
 	RedirectChanSize         int      `json:"redirect_chan_size"`
 	WritePageFreq            int      `json:"write_page_freq"`
+	SitePatterns			 map[string]int
 }
 
 func NewDefaultConfig() *Config {

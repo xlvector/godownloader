@@ -3,9 +3,9 @@ package downloader
 import (
 	"encoding/json"
 	"log"
-	"math/rand"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type Rule struct {
@@ -19,13 +19,23 @@ type RuleMatcher struct {
 	SiteRules    map[string]RuleList
 	CommonRules  RuleList
 	usedRules    map[string]bool
-	refreshTimes int
+	ticker 		*time.Ticker
 }
 
 func NewRuleMatcher() *RuleMatcher {
 	ret := RuleMatcher{}
 	ret.SiteRules = make(map[string]RuleList)
 	ret.usedRules = make(map[string]bool)
+	ret.ticker = time.NewTicker(10 * time.Second)
+	go func(){
+		for t := range ret.ticker.C {
+			log.Println("refresh rules at", t)
+			newRules := GetSitePatterns()
+			for rule, pri := range newRules {
+				ret.AddRule(rule, pri)
+			}
+		}
+	}()
 	return &ret
 }
 
@@ -67,7 +77,7 @@ type TemplateConfig struct {
 
 type TemplateConfigArray []TemplateConfig
 
-func GetNewPatterns() map[string]int {
+func GetSitePatterns() map[string]int {
 	log.Println("addlinkconfig")
 	downloader := NewDefaultHTTPGetProxyDownloader("http://10.181.10.21")
 	linksJson, _, err := downloader.Download("http://10.105.75.102/pagemining-tools/links/list.php")
@@ -131,12 +141,6 @@ func GetNewPatterns() map[string]int {
 }
 
 func (self *RuleMatcher) MatchRule(link string) int {
-	if rand.Float64() < 0.00001 {
-		newRules := GetNewPatterns()
-		for rule, pri := range newRules {
-			self.AddRule(rule, pri)
-		}
-	}
 	domain := ExtractMainDomain(link)
 	rules, ok := self.SiteRules[domain]
 	maxPriority := 0

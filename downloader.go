@@ -371,9 +371,6 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.pageDownloadCount = make(map[string]int)
 	ret.pageWriteCount = make(map[string]int)
 	ret.ruleMatcher = NewRuleMatcher()
-	for _, pt := range ConfigInstance().HighPrioritySitePatterns {
-		ret.ruleMatcher.AddRule(pt, 2)
-	}
 
 	for _, proxy := range GetProxyList() {
 		pd := NewHTTPGetProxyDownloader(proxy)

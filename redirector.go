@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"strconv"
 	"time"
 )
 
@@ -25,7 +24,6 @@ type RedirectorHandler struct {
 	writeCount           int
 	linksRecvCount       int
 	domainLinksRecvCount map[string]int
-	ruleMatcher          *RuleMatcher
 }
 
 func (self *RedirectorHandler) Match(link string) int {
@@ -83,10 +81,6 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.writeCount = 0
 	ret.linksRecvCount = 0
 	ret.domainLinksRecvCount = make(map[string]int)
-	ret.ruleMatcher = NewRuleMatcher()
-	for _, pt := range ConfigInstance().HighPrioritySitePatterns {
-		ret.ruleMatcher.AddRule(pt, 2)
-	}
 
 	for i := 0; i < ConfigInstance().RedirectChanNum*2; i++ {
 		go ret.Redirect(i)
@@ -151,7 +145,7 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			self.AddLink(link)
 
 			self.linksRecvCount += 1
-			if self.ruleMatcher.MatchRule(link) == 2 {
+			if self.urlFilter.Match(link) > 1 {
 				domain := ExtractMainDomain(link)
 				domain = strings.Replace(domain, ".", "_", -1)
 				self.domainLinksRecvCount[domain] += 1
