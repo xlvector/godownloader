@@ -27,6 +27,11 @@ func NewRuleMatcher() *RuleMatcher {
 	ret.SiteRules = make(map[string]RuleList)
 	ret.usedRules = make(map[string]bool)
 	ret.lastRefreshTime = time.Now().Unix()
+	newRules := GetSitePatterns()
+	for rule, pri := range newRules {
+		log.Println("add rule", rule, "with priority", pri)
+		ret.AddRule(rule, pri)
+	}
 	return &ret
 }
 
