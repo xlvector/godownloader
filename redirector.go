@@ -26,6 +26,7 @@ type RedirectorHandler struct {
 	writeCount           int
 	linksRecvCount       int
 	domainLinksRecvCount map[string]int
+	ticker *time.Ticker
 }
 
 func (self *RedirectorHandler) Match(link string) int {
@@ -83,6 +84,17 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.writeCount = 0
 	ret.linksRecvCount = 0
 	ret.domainLinksRecvCount = make(map[string]int)
+	ret.ticker = time.NewTicker(time.Second * 60)
+	go func() {
+		for t := range ret.ticker.C {
+			log.Println("refresh rules at", t)
+			newRules := GetSitePatterns()
+			for rule, pri := range newRules {
+				log.Println("add rule", rule, "with priority", pri)
+				ret.urlFilter.ruleMatcher.AddRule(rule, pri)
+			}
+		}
+	}()
 
 	for i := 0; i < ConfigInstance().RedirectChanNum*PRIORITY_LEVELS; i++ {
 		go ret.Redirect(i)

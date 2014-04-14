@@ -155,6 +155,7 @@ type WebSiteStat struct {
 }
 
 type DownloadHandler struct {
+	ticker *time.Ticker
 	metricSender                   *graphite.Client
 	LinksChannel                   chan string
 	Downloader                     *HTTPGetDownloader
@@ -380,6 +381,19 @@ func NewDownloadHanler() *DownloadHandler {
 		ret.ProxyDownloader = append(ret.ProxyDownloader, pd)
 	}
 	log.Println("proxy downloader count", len(ret.ProxyDownloader))
+
+	ret.ticker = time.NewTicker(time.Second * 60)
+	go func() {
+		for t := range ret.ticker.C {
+			log.Println("refresh rules at", t)
+			newRules := GetSitePatterns()
+			for rule, pri := range newRules {
+				log.Println("add rule", rule, "with priority", pri)
+				ret.urlFilter.ruleMatcher.AddRule(rule, pri)
+			}
+		}
+	}()
+
 	ret.signals = make(chan os.Signal, 1)
 	signal.Notify(ret.signals, syscall.SIGINT)
 	go func() {

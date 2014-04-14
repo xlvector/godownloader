@@ -5,7 +5,6 @@ import (
 	"log"
 	"regexp"
 	"strings"
-	"time"
 )
 
 type Rule struct {
@@ -19,14 +18,12 @@ type RuleMatcher struct {
 	SiteRules    map[string]RuleList
 	CommonRules  RuleList
 	usedRules    map[string]bool
-	lastRefreshTime int64
 }
 
 func NewRuleMatcher() *RuleMatcher {
 	ret := RuleMatcher{}
 	ret.SiteRules = make(map[string]RuleList)
 	ret.usedRules = make(map[string]bool)
-	ret.lastRefreshTime = time.Now().Unix()
 	newRules := GetSitePatterns()
 	for rule, pri := range newRules {
 		log.Println("add rule", rule, "with priority", pri)
@@ -137,15 +134,6 @@ func GetSitePatterns() map[string]int {
 }
 
 func (self *RuleMatcher) MatchRule(link string) int {
-	if(time.Now().Unix() - self.lastRefreshTime > 60) {
-		log.Println("refresh rules at", time.Now())
-		newRules := GetSitePatterns()
-		for rule, pri := range newRules {
-			log.Println("add rule", rule, "with priority", pri)
-			self.AddRule(rule, pri)
-		}
-		self.lastRefreshTime = time.Now().Unix()
-	}
 	domain := ExtractMainDomain(link)
 	rules, ok := self.SiteRules[domain]
 	maxPriority := 0
