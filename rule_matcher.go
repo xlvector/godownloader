@@ -26,7 +26,7 @@ func NewRuleMatcher() *RuleMatcher {
 	ret := RuleMatcher{}
 	ret.SiteRules = make(map[string]RuleList)
 	ret.usedRules = make(map[string]bool)
-	ret.ticker = time.NewTicker(10 * time.Second)
+	ret.ticker = time.NewTicker(60 * time.Second)
 	go func(){
 		for t := range ret.ticker.C {
 			log.Println("refresh rules at", t)
