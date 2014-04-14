@@ -118,7 +118,7 @@ func (self *RedirectorHandler) BatchAddLinkFromFile() {
 	}
 }
 
-func (self *RedirectorHandler) AddLink(link string) {
+func (self *RedirectorHandler) AddLink(link string, isFilter string) {
 	priority := self.Match(link)
 	if priority <= 0 {
 		return
@@ -126,7 +126,7 @@ func (self *RedirectorHandler) AddLink(link string) {
 	addr := ExtractMainDomain(link)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
-		if CheckBloomFilter(link) {
+		if isFilter == "true" && CheckBloomFilter(link) {
 			log.Println("downloaded before : ", link)
 			return
 		}
@@ -151,12 +151,13 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 	}()
 
 	links := req.PostFormValue("links")
+	isFilter := req.PostFormValue("filter")
 	if len(links) > 0 {
 		pb := PostBody{}
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			self.AddLink(link)
+			self.AddLink(link, isFilter)
 
 			self.linksRecvCount += 1
 			if self.urlFilter.Match(link) > 1 {
