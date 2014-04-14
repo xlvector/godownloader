@@ -114,7 +114,7 @@ func (self *RedirectorHandler) BatchAddLinkFromFile() {
 		if err != nil {
 			break
 		}
-		self.AddLink(line)
+		self.AddLink(line, "true")
 	}
 }
 
