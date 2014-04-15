@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"runtime"
 	"time"
+	"os"
 )
 
 func main() {
@@ -16,6 +17,7 @@ func main() {
 	flag.Parse()
 
 	downloader.Port = *port
+	downloader.LogWriter, _ = os.Create("access.log")
 
 	if *mode == "download" {
 		http.Handle("/download", downloader.NewDownloadHanler())
