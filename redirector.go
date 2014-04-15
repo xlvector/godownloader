@@ -48,11 +48,10 @@ func (self *RedirectorHandler) GetIP(host string) string {
 
 func (self *RedirectorHandler) Redirect(ci int) {
 	priority := ci/ConfigInstance().RedirectChanNum + 1
-	log.Println("priority of chan ", ci, "is", priority)
 	n := 0
 	for link := range self.linksChannel[ci] {
 		n += 1
-		log.Println("redirect : ", link)
+		Logging(time.Now().Unix(), "redirector", "send", page.Link)
 		pb := PostBody{}
 		pb.Links = []string{link}
 		jsonBlob, err := json.Marshal(&pb)
@@ -126,12 +125,12 @@ func (self *RedirectorHandler) AddLink(link string, isFilter string) {
 	addr := ExtractMainDomain(link)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
+		Logging(time.Now().Unix(), "redirector", "receive", page.Link)
 		if isFilter != "false" && CheckBloomFilter(link) {
 			log.Println("downloaded before : ", link)
 			return
 		}
-
-		log.Println("channel", ci, "priority", priority, "recv link : ", link, addr)
+		Logging(time.Now().Unix(), "redirector", "push_queue", page.Link)
 		self.processedLinks.Add(link)
 		self.linksChannel[ci] <- link
 		self.usedChannels[int(ci)] = time.Now().Unix()

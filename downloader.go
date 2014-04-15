@@ -204,7 +204,7 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.RespInfo)
 	self.writer.WriteString("\n")
-	log.Println("write : ", page.Link)
+	Logging(time.Now().Unix(), "downloader", "write", page.Link)
 }
 
 func (self *DownloadHandler) FlushPages() {
@@ -248,7 +248,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsValidLink(link) {
 		return
 	}
-	log.Println("begin : ", link)
+	Logging(time.Now().Unix(), "downloader", "start", page.Link)
 	self.processedPageCount += 1
 	html := ""
 	resp := ""
@@ -286,7 +286,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsChinesePage(html) {
 		return
 	}
-	log.Println("finish : ", link)
+	Logging(time.Now().Unix(), "downloader", "finish", page.Link)
 	page := WebPage{Link: link, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
 
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
@@ -328,7 +328,6 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 		tm1 := time.Now().Unix()
 
 		if tm1-tm > 60 || len(lm) > 100 || procn < 10 {
-			log.Println("send links : ", len(lm))
 			pb := PostBody{}
 			pb.Links = []string{}
 			for lk, _ := range lm {
