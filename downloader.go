@@ -248,7 +248,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsValidLink(link) {
 		return
 	}
-	Logging(time.Now().Unix(), "downloader", "start", page.Link)
+	Logging(time.Now().Unix(), "downloader", "start", link)
 	self.processedPageCount += 1
 	html := ""
 	resp := ""
@@ -286,7 +286,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsChinesePage(html) {
 		return
 	}
-	Logging(time.Now().Unix(), "downloader", "finish", page.Link)
+	Logging(time.Now().Unix(), "downloader", "finish", link)
 	page := WebPage{Link: link, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
 
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
