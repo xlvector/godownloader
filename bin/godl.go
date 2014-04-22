@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"runtime"
 	"time"
-	"os"
 )
 
 func main() {
