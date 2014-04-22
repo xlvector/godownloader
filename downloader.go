@@ -352,7 +352,6 @@ func NewDownloadHanler() *DownloadHandler {
 	var err error
 	ret.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 	ret.writer, err = os.Create("./pages/" + ret.currentPath)
-	defer ret.writer.Close()
 
 	if err != nil {
 		log.Println(err)
