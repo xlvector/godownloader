@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	downloader.Port = *port
-	downloader.LogWriter, _ = os.Create("access.log")
+	//downloader.LogWriter, _ = os.Create("access.log")
 
 	if *mode == "download" {
 		http.Handle("/download", downloader.NewDownloadHanler())
