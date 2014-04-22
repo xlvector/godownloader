@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	USER_AGENT            = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31"
+	USER_AGENT            = "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.8.1.14) Gecko/20080404 (FoxPlus) Firefox/2.0.0.14"
 	DOWNLOADER_QUEUE_SIZE = 512
 )
 
@@ -204,7 +204,7 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.RespInfo)
 	self.writer.WriteString("\n")
-	Logging(time.Now().Unix(), "downloader", "write", page.Link)
+	log.Println(time.Now().Unix(), "downloader", "write", page.Link)
 }
 
 func (self *DownloadHandler) FlushPages() {
@@ -248,7 +248,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsValidLink(link) {
 		return
 	}
-	Logging(time.Now().Unix(), "downloader", "start", link)
+	log.Println(time.Now().Unix(), "downloader", "start", link)
 	self.processedPageCount += 1
 	html := ""
 	resp := ""
@@ -286,7 +286,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsChinesePage(html) {
 		return
 	}
-	Logging(time.Now().Unix(), "downloader", "finish", link)
+	log.Println(time.Now().Unix(), "downloader", "finish", link)
 	page := WebPage{Link: link, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
 
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
