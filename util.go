@@ -18,6 +18,22 @@ func GetHostName() string {
 	return strings.Replace(strings.ToLower(hostname), ".", "_", -1)
 }
 
+func extractUrlParams(link string) map[string]string{
+	tks := strings.Split(link, "?")
+	if len(tks) != 2 {
+		return nil
+	}
+	params := strings.Split(tks[1], "&")
+	ret := make(map[string]string)
+	for _, param := range params {
+		kv := strings.Split(param, "=")
+		if len(kv) == 2 {
+			ret[kv[0]] = kv[1]
+		}
+	}
+	return ret
+}
+
 func IsUTF8(buf string) bool {
 	i := 0
 	for {

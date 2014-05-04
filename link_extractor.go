@@ -26,6 +26,15 @@ func ExtractDomain(path string) string {
 	return ret
 }
 
+func ExtractDomainOnly(path string) string {
+	tks := strings.Split(path, "/")
+	if len(tks) < 3 {
+		return ""
+	}
+	ret := strings.Replace(tks[2], ".", "_", -1)
+	return ret
+}
+
 func LoopUpHost(path string) string {
 	host := ExtractDomain(path)
 	addrs, _ := net.LookupHost(host)

@@ -34,6 +34,22 @@ type HTTPGetDownloader struct {
 	client  *http.Client
 }
 
+func extractSearchQuery(link string) string {
+	params := extractUrlParams(link)
+	if strings.Contains(link, "www.baidu.com") {
+		ret, ok := params["wd"]
+		if ok {
+			return ret
+		}
+	} else if strings.Contains(link, "www.sogou.com") {
+		ret, ok := params["query"]
+		if ok {
+			return ret
+		}
+	}
+	return ""
+}
+
 func dialTimeout(network, addr string) (net.Conn, error) {
 	timeout := time.Duration(ConfigInstance().DownloadTimeout) * time.Second
 	deadline := time.Now().Add(timeout)
@@ -93,7 +109,26 @@ func NewDefaultHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
 	return &ret
 }
 
+func setStatus(query, status string) {
+	client := &http.Client{
+		Transport: &http.Transport{
+			Dial:                  dialTimeout,
+			DisableKeepAlives:     true,
+			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
+		},
+	}
+	req, _ := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/" + query + "/" + status, nil)
+	resp, _ := client.Do(req)
+	defer resp.Body.Close()
+	ioutil.ReadAll(resp.Body)
+}
+
 func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
+	query := extractSearchQuery(url)
+	if len(query) > 0 {
+		setStatus(query, "downloader.start." + ExtractDomainOnly(url))
+	}
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
 		return "", "", err
@@ -116,6 +151,9 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 		if err != nil {
 			return "", "", err
 		} else {
+			if len(query) > 0 {
+				setStatus(query, "downloader.end." + ExtractDomainOnly(url))
+			}
 			if self.cleaner != nil {
 				utf8Html := self.cleaner.ToUTF8(html)
 				if utf8Html == nil {
@@ -204,6 +242,11 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.RespInfo)
 	self.writer.WriteString("\n")
+
+	query := extractSearchQuery(page.Link)
+	if len(query) > 0 {
+		setStatus(query, "downloader.write." + ExtractDomainOnly(page.Link))
+	}
 	log.Println(time.Now().Unix(), "downloader", "write", page.Link)
 }
 
