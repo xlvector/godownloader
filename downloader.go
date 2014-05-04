@@ -267,7 +267,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	} else {
 		html, resp, err = self.Downloader.Download(link)
 	}
-	elapsed := time.Since(start) / 1000000
+	elapsed := int64(time.Since(start) / 1000000)
 	self.metricSender.Timing("crawler.downloader."+GetHostName()+"."+Port+".download_time", elapsed, 1.0)
 	self.metricSender.Timing("crawler.downloader.download_time", elapsed, 1.0)
 
