@@ -122,7 +122,7 @@ func setStatus(query, status string) {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
-	req, err := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/" + query + "/" + status, nil)
+	req, err := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/" + query + "/" + strconv.FormatInt(time.Now().Unix(), 10) + "." + status, nil)
 	if err != nil{
 		return
 	}
@@ -137,7 +137,7 @@ func setStatus(query, status string) {
 func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 	query := extractSearchQuery(url)
 	if len(query) > 0 {
-		setStatus(query, strconv.FormatInt(time.Now().Unix(), 10) + ".downloader.start." + ExtractDomainOnly(url))
+		setStatus(query, "downloader.start." + ExtractDomainOnly(url))
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
