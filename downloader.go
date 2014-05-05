@@ -153,6 +153,9 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 	} else {
 		respInfo += "<real_url>" + resp.Request.URL.String() + "</real_url>"
 		respInfo += "<content_type>" + resp.Header.Get("Content-Type") + "</content_type>"
+		if len(query) > 0 {
+			respInfo += "<query>" + query + "</query>"
+		}
 		defer resp.Body.Close()
 		if !strings.Contains(resp.Header.Get("Content-Type"), "text/") && !strings.Contains(resp.Header.Get("Content-Type"), "json") {
 			return "", "", errors.New("non html page")
