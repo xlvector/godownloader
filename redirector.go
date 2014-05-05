@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const PRIORITY_LEVELS = 5
+const PRIORITY_LEVELS = 6
 
 type RedirectorHandler struct {
 	metricSender         *graphite.Client
@@ -113,15 +113,18 @@ func (self *RedirectorHandler) BatchAddLinkFromFile() {
 		if err != nil {
 			break
 		}
-		self.AddLink(line, "true")
+		self.AddLink(line, "true", "normal")
 	}
 }
 
-func (self *RedirectorHandler) AddLink(link string, isFilter string) {
+func (self *RedirectorHandler) AddLink(link string, isFilter string, pri string) {
 	log.Println(time.Now().Unix(), "redirector", "receive", link)
 	priority := self.Match(link)
 	if priority <= 0 {
 		return
+	}
+	if pri == "high" {
+		priority = PRIORITY_LEVELS
 	}
 	addr := ExtractMainDomain(link)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
@@ -151,12 +154,13 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 
 	links := req.PostFormValue("links")
 	isFilter := req.PostFormValue("filter")
+	priority := req.PostFormValue("priority")
 	if len(links) > 0 {
 		pb := PostBody{}
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			self.AddLink(link, isFilter)
+			self.AddLink(link, isFilter, priority)
 
 			self.linksRecvCount += 1
 			if self.urlFilter.Match(link) > 1 {
