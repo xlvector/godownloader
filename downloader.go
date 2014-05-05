@@ -117,9 +117,15 @@ func setStatus(query, status string) {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
-	req, _ := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/" + query + "/" + status, nil)
-	resp, _ := client.Do(req)
+	req, err := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/" + query + "/" + status, nil)
+	if err != nil{
+		return
+	}
+	resp, err := client.Do(req)
 	defer resp.Body.Close()
+	if err != nil {
+		return
+	}
 	ioutil.ReadAll(resp.Body)
 }
 
