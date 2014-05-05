@@ -137,7 +137,7 @@ func setStatus(query, status string) {
 func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 	query := extractSearchQuery(url)
 	if len(query) > 0 {
-		setStatus(query, "downloader.start." + ExtractDomainOnly(url))
+		setStatus(query, strconv.FormatInt(time.Now().Unix(), 10) + ".downloader.start." + ExtractDomainOnly(url))
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
