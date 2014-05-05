@@ -122,7 +122,7 @@ func setStatus(query, status string) {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
-	req, err := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/" + query + "/" + strconv.FormatInt(time.Now().Unix(), 10) + "." + status, nil)
+	req, err := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/query." + query + "/" + strconv.FormatInt(time.Now().Unix(), 10) + "." + status, nil)
 	if err != nil{
 		return
 	}
