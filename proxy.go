@@ -28,7 +28,11 @@ func GetProxyList() []string {
 		if err != nil {
 			break
 		}
-		ret = append(ret, strings.Trim(line, "\n"))
+		line = strings.Trim(line, "\n")
+		if !strings.Contains(line, "http://") {
+			line = "http://" + line
+		}
+		ret = append(ret, line)
 	}
 	return ret
 }
