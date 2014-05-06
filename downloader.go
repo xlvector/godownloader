@@ -127,10 +127,10 @@ func setStatus(query, status string) {
 		return
 	}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
-	if err != nil {
+	if err != nil || resp == nil || resp.Body == nil {
 		return
 	}
+	defer resp.Body.Close()
 	ioutil.ReadAll(resp.Body)
 }
 
