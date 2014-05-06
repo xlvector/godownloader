@@ -26,6 +26,18 @@ func ExtractDomain(path string) string {
 	return ret
 }
 
+func RemoveLastPart(path string) string {
+	if path[len(path) - 1] == '/' {
+		return path
+	}
+	tks := strings.Split(path, "/")
+	ret := tks[0] + "//" + tks[2]
+	for i := 3; i < len(tks) - 1; i++ {
+		ret += "/" + tks[i]
+	}
+	return ret + "/"
+}
+
 func ExtractDomainOnly(path string) string {
 	tks := strings.Split(path, "/")
 	if len(tks) < 3 {
@@ -121,6 +133,8 @@ func ConcatLink(root0 string, link0 string) string {
 	link := strings.ToLower(link0)
 	if strings.Index(link, "http://") == 0 || strings.Index(link, "https://") == 0 {
 		return link0
+	} else if len(link0) > 0 && link0[0] != '.' && link0[0] != '/' {
+		return RemoveLastPart(root0) + link0
 	} else {
 		srcTks := strings.Split(root, "/")
 		dstTks := strings.Split(link0, "/")

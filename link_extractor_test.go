@@ -33,6 +33,27 @@ func TestExtractMainDomain(t *testing.T) {
 	}
 }
 
+func TestConcatLinks(t *testing.T) {
+	if ConcatLink("http://www.baidu.com/Hello", "world") != "http://www.baidu.com/world" {
+		t.Error()
+	}
+	if ConcatLink("http://www.baidu.com/Hello/", "world") != "http://www.baidu.com/Hello/world" {
+		t.Error()
+	}
+	if ConcatLink("http://www.baidu.com/Hello/2", "world") != "http://www.baidu.com/Hello/world" {
+		t.Error()
+	}
+	if ConcatLink("http://www.baidu.com/Hello/", "/world") != "http://www.baidu.com/world" {
+		t.Error()
+	}
+	if ConcatLink("http://www.baidu.com/Hello/", "http://world") != "http://world" {
+		t.Error()
+	}
+	if ConcatLink("http://www.baidu.com/Hello/", "world/haha") != "http://www.baidu.com/Hello/world/haha" {
+		t.Error()
+	}
+}
+
 func TestExtractLinks(t *testing.T) {
 	html := `
 		<html>
