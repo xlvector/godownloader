@@ -123,10 +123,7 @@ func (self *RedirectorHandler) BatchAddLinkFromFile() {
 
 func (self *RedirectorHandler) AddLink(link string, isFilter string, pri string) {
 	log.Println(time.Now().Unix(), "redirector", "receive", link)
-	query := extractSearchQuery(link)
-	if len(query) > 0 {
-		setStatus(query, "redirector.recv." + ExtractDomainOnly(link))
-	}
+
 	priority := self.Match(link)
 	if priority <= 0 {
 		return
@@ -138,10 +135,10 @@ func (self *RedirectorHandler) AddLink(link string, isFilter string, pri string)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
 		if isFilter != "false" && CheckBloomFilter(link) {
-			log.Println("downloaded before : ", link)
 			return
 		}
 		log.Println(time.Now().Unix(), "redirector", "push_queue", link)
+		query := extractSearchQuery(link)
 		if len(query) > 0 {
 			setStatus(query, "redirector.push." + ExtractDomainOnly(link))
 		}
