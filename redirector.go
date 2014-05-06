@@ -51,7 +51,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 	n := 0
 	for link := range self.linksChannel[ci] {
 		n += 1
-		log.Println(time.Now().Unix(), "redirector", "send", link)
+		log.Println(time.Now().Unix(), "redirector", "send", link, priority)
 		query := extractSearchQuery(link)
 		if len(query) > 0 {
 			setStatus(query, "redirector.send." + ExtractDomainOnly(link))
@@ -64,10 +64,12 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			req["links"] = string(jsonBlob)
 			PostHTTPRequest(ConfigInstance().DownloaderHost, req)
 		}
-		time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) / time.Duration(priority))
-		if n%100 == 0 {
-			time.Sleep(time.Duration(rand.Int63n(120)) * time.Second)
-			log.Println("channel sleep : ", ci)
+		if priority == PRIORITY_LEVELS {
+			time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) / time.Duration(priority))
+			if n%100 == 0 {
+				time.Sleep(time.Duration(rand.Int63n(120)) * time.Second)
+				log.Println("channel sleep : ", ci)
+			}
 		}
 	}
 }
