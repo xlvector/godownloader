@@ -139,7 +139,7 @@ func (self *RedirectorHandler) AddLink(link string, isFilter string, pri string)
 		if isFilter != "false" && CheckBloomFilter(link) {
 			return
 		}
-		log.Println(time.Now().Unix(), "redirector", "push_queue", link)
+		log.Println(time.Now().Unix(), "redirector", "push_queue", link, priority)
 		query := extractSearchQuery(link)
 		if len(query) > 0 {
 			setStatus(query, "redirector.push." + ExtractDomainOnly(link))
