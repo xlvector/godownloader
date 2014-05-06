@@ -290,16 +290,6 @@ func (self *DownloadHandler) GetProxyDownloader() *HTTPGetDownloader {
 	return self.ProxyDownloader[rand.Intn(len(self.ProxyDownloader))]
 }
 
-func (self *DownloadHandler) UseProxy(link string) bool {
-	return true
-	/*domain := ExtractMainDomain(link)
-	if strings.Contains(domain, "edu.cn") || strings.Contains(domain, "gov.cn") {
-		return false
-	} else {
-		return true
-	}*/
-}
-
 func (self *DownloadHandler) ProcessLink(link string) {
 	if !IsValidLink(link) {
 		return
@@ -310,26 +300,29 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	resp := ""
 	var err error
 	start := time.Now()
-	downloader := self.GetProxyDownloader()
-	if self.UseProxy(link) && downloader != nil {
-		html, resp, err = downloader.Download(link)
-		if err != nil {
-			log.Println(time.Now().Unix(), "downloader", "proxy_failed", link)
-			self.proxyDownloadedPageFailedCount += 1
-			html, resp, err = self.Downloader.Download(link)
-		} else {
-			self.proxyDownloadedPageCount += 1
-			log.Println(time.Now().Unix(), "downloader", "proxy_success", link)
+	
+
+	html, resp, err = self.Download.Download(link)
+	if err != nil {
+		log.Println(time.Now().Unix(), "downloader", "self_failed", link)
+		downloader := self.GetProxyDownloader()
+		if downloader != nil {
+			html, resp, err = self.GetProxyDownloader().Download(link)
+			if err != nil {
+				log.Println(time.Now().Unix(), "downloader", "proxy_failed", link)
+				self.proxyDownloadedPageFailedCount += 1
+			} else {
+				self.proxyDownloadedPageCount += 1
+				log.Println(time.Now().Unix(), "downloader", "proxy_success", link)
+			}
 		}
-	} else {
-		html, resp, err = self.Downloader.Download(link)
 	}
+
 	elapsed := int64(time.Since(start) / 1000000)
 	self.metricSender.Timing("crawler.downloader."+GetHostName()+"."+Port+".download_time", elapsed, 1.0)
 	self.metricSender.Timing("crawler.downloader.download_time", elapsed, 1.0)
 
 	if err != nil {
-		log.Println(time.Now().Unix(), "downloader", "failed", link)
 		return
 	}
 	self.totalDownloadedPageCount += 1
