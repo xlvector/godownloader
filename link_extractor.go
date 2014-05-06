@@ -92,6 +92,9 @@ func IsValidLink(link string) bool {
 	if strings.Contains(link, "void(") {
 		return false
 	}
+	if strings.Contains(link, "(") {
+		return false
+	}
 	tks := strings.Split(link, ".")
 	if len(tks) > 0 && (tks[len(tks)-1] == "jpg" || tks[len(tks)-1] == "css" || tks[len(tks)-1] == "js" || tks[len(tks)-1] == "png" || tks[len(tks)-1] == "gif") {
 		return false
