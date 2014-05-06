@@ -145,6 +145,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 		return "", "", err
 	}
 	req.Header.Set("User-Agent", USER_AGENT)
+	req.Header.Set("hello", "world")
 	resp, err := self.client.Do(req)
 
 	respInfo := ""
