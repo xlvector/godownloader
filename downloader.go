@@ -302,7 +302,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	start := time.Now()
 	
 
-	html, resp, err = self.Download.Download(link)
+	html, resp, err = self.Downloader.Download(link)
 	if err != nil {
 		log.Println(time.Now().Unix(), "downloader", "self_failed", link)
 		downloader := self.GetProxyDownloader()
