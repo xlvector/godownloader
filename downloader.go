@@ -231,12 +231,10 @@ type DownloadHandler struct {
 func (self *DownloadHandler) WritePage(page WebPage) {
 
 	if !utf8.ValidString(page.Link) {
-		log.Println("non utf8 link : ", page.Link)
 		return
 	}
 
 	if !utf8.ValidString(page.Html) {
-		log.Println("non utf8 page : ", page.Link)
 		return
 	}
 
@@ -316,11 +314,12 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	if self.UseProxy(link) && downloader != nil {
 		html, resp, err = downloader.Download(link)
 		if err != nil {
-			log.Println("proxy", err)
+			log.Println(time.Now().Unix(), "downloader", "proxy_failed", link)
 			self.proxyDownloadedPageFailedCount += 1
 			html, resp, err = self.Downloader.Download(link)
 		} else {
 			self.proxyDownloadedPageCount += 1
+			log.Println(time.Now().Unix(), "downloader", "proxy_success", link)
 		}
 	} else {
 		html, resp, err = self.Downloader.Download(link)
@@ -330,7 +329,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	self.metricSender.Timing("crawler.downloader.download_time", elapsed, 1.0)
 
 	if err != nil {
-		log.Println(err)
+		log.Println(time.Now().Unix(), "downloader", "failed", link)
 		return
 	}
 	self.totalDownloadedPageCount += 1
@@ -356,7 +355,6 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	}
 
 	elinks := ExtractLinks([]byte(html), link)
-	log.Println("extract links : ", len(elinks))
 	for _, elink := range elinks {
 		nlink := NormalizeLink(elink)
 		linkPriority := self.Match(nlink)
@@ -416,7 +414,6 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.writer, err = os.Create("./pages/" + ret.currentPath)
 
 	if err != nil {
-		log.Println(err)
 		os.Exit(0)
 	}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
