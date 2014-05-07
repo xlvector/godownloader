@@ -21,7 +21,7 @@ func GetHostName() string {
 func extractUrlParams(link string) map[string]string{
 	tks := strings.Split(link, "?")
 	if len(tks) != 2 {
-		tks := strings.Split(link, "#")
+		tks = strings.Split(link, "#")
 	}
 	if len(tks) != 2 {
 		return nil
