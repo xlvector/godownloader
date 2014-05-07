@@ -46,6 +46,9 @@ func (self *HTMLCleaner) CleanHTML(src []byte) []byte {
 
 func (self *HTMLCleaner) ToUTF8(html []byte) []byte {
 	charset := self.detectCharset(html)
+	if !strings.Contains(charset, "gb"){
+		charset = "utf-8"
+	}
 	if charset == "utf-8" || charset == "utf8" {
 		return html
 	} else if charset == "gb2312" || charset == "gb-2312" || charset == "gbk" || charset == "gb18030" || charset == "gb-18030" {
