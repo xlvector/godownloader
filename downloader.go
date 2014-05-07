@@ -37,7 +37,7 @@ type HTTPGetDownloader struct {
 func extractSearchQuery(link string) string {
 	params := extractUrlParams(link)
 	if strings.Contains(link, "www.baidu.com") {
-		ret, ok := params["word"]
+		ret, ok := params["wd"]
 		if ok {
 			return ret
 		}
