@@ -24,7 +24,7 @@ func extractUrlParams(link string) map[string]string{
 		tks := strings.Split(link, "#")
 	}
 	if len(tks) != 2 {
-		return ""
+		return nil
 	}
 	params := strings.Split(tks[1], "&")
 	ret := make(map[string]string)
