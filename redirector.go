@@ -64,9 +64,9 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			req["links"] = string(jsonBlob)
 			PostHTTPRequest(ConfigInstance().DownloaderHost, req)
 		}
-		time.Sleep(time.Duration(int64(10 * time.Second) / int64(priority)))
+		time.Sleep(time.Duration(int64(10 * time.Second) / int64(1 + priority)))
 		if n%100 == 0 {
-			time.Sleep(time.Duration(rand.Int63n(120) / int64(priority)) * time.Second)
+			time.Sleep(time.Duration(rand.Int63n(60) / int64(1 + priority)) * time.Second)
 			log.Println("channel sleep : ", ci)
 		}
 	}
