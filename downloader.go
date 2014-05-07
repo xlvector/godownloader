@@ -304,13 +304,13 @@ func (self *DownloadHandler) ProcessLink(link string) {
 
 	html, resp, err = self.Downloader.Download(link)
 	if err != nil {
-		log.Println(time.Now().Unix(), "downloader", "self_failed", link)
+		log.Println(time.Now().Unix(), "downloader", "self_failed", link, err)
 		for k := 0; k < 2; k++ {
 			downloader := self.GetProxyDownloader()
 			if downloader != nil {
 				html, resp, err = self.GetProxyDownloader().Download(link)
 				if err != nil {
-					log.Println(time.Now().Unix(), "downloader", "proxy_failed", link)
+					log.Println(time.Now().Unix(), "downloader", "proxy_failed", link, err)
 					self.proxyDownloadedPageFailedCount += 1
 				} else {
 					self.proxyDownloadedPageCount += 1
