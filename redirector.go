@@ -64,12 +64,10 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			req["links"] = string(jsonBlob)
 			PostHTTPRequest(ConfigInstance().DownloaderHost, req)
 		}
-		if priority < PRIORITY_LEVELS {
-			time.Sleep(60 * time.Second / time.Duration(ConfigInstance().PagePerMinute) / time.Duration(priority))
-			if n%100 == 0 {
-				time.Sleep(time.Duration(rand.Int63n(120)) * time.Second)
-				log.Println("channel sleep : ", ci)
-			}
+		time.Sleep(time.Duration(int64(10 * time.Second) / int64(priority)))
+		if n%100 == 0 {
+			time.Sleep(time.Duration(rand.Int63n(120) / int64(priority)) * time.Second)
+			log.Println("channel sleep : ", ci)
 		}
 	}
 }
