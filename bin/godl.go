@@ -21,6 +21,9 @@ func main() {
 	if *mode == "download" {
 		http.Handle("/download", downloader.NewDownloadHanler())
 	}
+	if *mode == "simple" {
+		http.Handle("/simple", downloader.NewSimpleDownloadHandler())
+	}
 	if *mode == "redirect" {
 		http.Handle("/redirect", downloader.NewRedirectorHandler())
 	}
