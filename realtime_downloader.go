@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"compress/gzip"
 )
 
 type RealtimeDownloadHandler struct {
@@ -52,6 +53,9 @@ func (self *RealtimeDownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.
 	}()
 
 	link := req.FormValue("link")
-
-	fmt.Fprint(w, self.ProcessLink(link))
+	ret = self.ProcessLink(link)
+	w.Header().Set("Content-Encoding", "gzip")
+	gz := gzip.NewWriter(w)
+	defer gz.Close()
+	gz.Write(ret)
 }
