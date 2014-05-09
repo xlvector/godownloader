@@ -3,7 +3,6 @@ package downloader
 import (
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 	"compress/gzip"
 )
