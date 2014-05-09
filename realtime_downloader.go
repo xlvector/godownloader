@@ -31,10 +31,7 @@ func (self *RealtimeDownloadHandler) ProcessLink(link string) string {
 		return ""
 	}
 	log.Println(time.Now().Unix(), "downloader", "finish", link)
-	page := WebPage{Link: link, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
-
-	ret := strconv.FormatInt(page.DownloadedAt, 10) + "\t" + page.Link + "\t" + page.Html + "\t" + page.RespInfo
-	return ret
+	return html
 }
 
 
@@ -54,7 +51,7 @@ func (self *RealtimeDownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.
 	link := req.FormValue("link")
 	ret := self.ProcessLink(link)
 	w.Header().Set("Content-Encoding", "gzip")
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/html")
 	gz := gzip.NewWriter(w)
 	defer gz.Close()
 	gz.Write([]byte(ret))
