@@ -17,7 +17,7 @@ func (self *RealtimeDownloadHandler) ProcessLink(link string) string {
 	resp := ""
 	var err error	
 
-	html, resp, err = self.Downloader.Download(link)
+	html, _, err = self.Downloader.Download(link)
 	if err != nil {
 		return ""
 	}
