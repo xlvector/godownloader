@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 	"unicode/utf8"
+	"encoding/base64"
 )
 
 const (
@@ -39,6 +40,11 @@ func extractSearchQuery(link0 string) string {
 	if strings.Contains(link, "realtime?link=") {
 		kv := strings.Split(link, "realtime?link=")
 		link = kv[1]
+		linkbyte, err := base64.URLEncoding.DecodeString(link)
+		if err != nil {
+			return ""
+		}
+		link = string(linkbyte)
 		log.Println("downloader change link", link0, link)
 	}
 	params := extractUrlParams(link)
@@ -247,6 +253,12 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	if strings.Contains(page.Link, "realtime?link="){
 		kv := strings.Split(page.Link, "realtime?link=")
 		page.Link = kv[1]
+		link, err := base64.URLEncoding.DecodeString(page.Link)
+		if err != nil {
+			log.Println("downloader decode base64 error", link, err)
+			return
+		}
+		page.Link = string(link)
 	}
 
 	SetBloomFilter(page.Link)
@@ -326,7 +338,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	}
 	if rtd != "" && len(query) > 0 {
 		log.Println("realtime downloader", rtd, "for query", query)
-		html, resp, err = self.Downloader.Download(rtd + url.QueryEscape(link))
+		html, resp, err = self.Downloader.Download(rtd + base64.URLEncoding.EncodeToString([]byte(link)))
 	}
 	if err != nil || len(html) == 0 {
 		html, resp, err = self.Downloader.Download(link)

@@ -50,9 +50,6 @@ func GetRealtimeDownloaderList() []string {
 			break
 		}
 		line = strings.Trim(line, "\n")
-		if !strings.Contains(line, "http://") {
-			line = "http://" + line
-		}
 		ret = append(ret, line)
 	}
 	return ret
