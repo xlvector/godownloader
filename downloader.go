@@ -147,6 +147,8 @@ func setStatus(query, status string) {
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
+	query := extractSearchQuery(url)
+	log.Println("extract query", query, "from", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
@@ -322,7 +324,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	}
 	query := extractSearchQuery(link)
 	if len(query) > 0 {
-		setStatus(query, "downloader.start." + ExtractDomainOnly(url))
+		setStatus(query, "downloader.start." + ExtractDomainOnly(link))
 	}
 	log.Println(time.Now().Unix(), "downloader", "start", link)
 	self.processedPageCount += 1
