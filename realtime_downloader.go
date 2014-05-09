@@ -56,5 +56,5 @@ func (self *RealtimeDownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.
 	w.Header().Set("Content-Encoding", "gzip")
 	gz := gzip.NewWriter(w)
 	defer gz.Close()
-	gz.Write(ret)
+	gz.Write([]byte(ret))
 }
