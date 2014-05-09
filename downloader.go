@@ -34,7 +34,13 @@ type HTTPGetDownloader struct {
 	client  *http.Client
 }
 
-func extractSearchQuery(link string) string {
+func extractSearchQuery(link0 string) string {
+	link := link0
+	if strings.Contains(link, "realtime?link=") {
+		kv := strings.Split(link, "realtime?link=")
+		link = kv[1]
+		log.Println("downloader change link", link0, link)
+	}
 	params := extractUrlParams(link)
 	if strings.Contains(link, "www.baidu.com") {
 		ret, ok := params["word"]
