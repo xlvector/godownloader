@@ -14,7 +14,6 @@ type RealtimeDownloadHandler struct {
 func (self *RealtimeDownloadHandler) ProcessLink(link string) string {
 	log.Println(time.Now().Unix(), "downloader", "start", link)
 	html := ""
-	resp := ""
 	var err error	
 
 	html, _, err = self.Downloader.Download(link)
