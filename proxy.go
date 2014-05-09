@@ -36,3 +36,24 @@ func GetProxyList() []string {
 	}
 	return ret
 }
+
+func GetRealtimeDownloaderList() []string {
+	ret := []string{}
+	f, err := os.Open("realtime_downloader.list")
+	if err != nil {
+		return ret
+	}
+	r := bufio.NewReader(f)
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			break
+		}
+		line = strings.Trim(line, "\n")
+		if !strings.Contains(line, "http://") {
+			line = "http://" + line
+		}
+		ret = append(ret, line)
+	}
+	return ret
+}
