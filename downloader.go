@@ -321,7 +321,11 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	start := time.Now()
 	
 	rtd := self.GetRtDownloaderAddr()
+	if len(rtd) > 0 {
+		log.Println("realtime downloader", rtd)
+	}
 	if rtd != "" && len(query) > 0 {
+		log.Println("realtime downloader", rtd, "for query", query)
 		html, resp, err = self.Downloader.Download(rtd + url.QueryEscape(link))
 	}
 	if err != nil || len(html) == 0 {
