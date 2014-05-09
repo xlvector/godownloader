@@ -148,7 +148,6 @@ func setStatus(query, status string) {
 
 func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 	query := extractSearchQuery(url)
-	log.Println("extract query", query, "from", url)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil || req == nil || req.Header == nil {
@@ -165,6 +164,7 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 		respInfo += "<real_url>" + resp.Request.URL.String() + "</real_url>"
 		respInfo += "<content_type>" + resp.Header.Get("Content-Type") + "</content_type>"
 		if len(query) > 0 {
+			log.Println("extract", query, "from", url)
 			respInfo += "<query>" + query + "</query>"
 		}
 		defer resp.Body.Close()
