@@ -2,7 +2,6 @@ package downloader
 
 import (
 	"log"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -53,7 +52,7 @@ func (self *RealtimeDownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.
 	}()
 
 	link := req.FormValue("link")
-	ret = self.ProcessLink(link)
+	ret := self.ProcessLink(link)
 	w.Header().Set("Content-Encoding", "gzip")
 	gz := gzip.NewWriter(w)
 	defer gz.Close()
