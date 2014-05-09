@@ -54,6 +54,7 @@ func (self *RealtimeDownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.
 	link := req.FormValue("link")
 	ret := self.ProcessLink(link)
 	w.Header().Set("Content-Encoding", "gzip")
+	w.Header().Set("Content-Type", "text/plain")
 	gz := gzip.NewWriter(w)
 	defer gz.Close()
 	gz.Write([]byte(ret))
