@@ -24,6 +24,9 @@ func main() {
 	if *mode == "simple" {
 		http.Handle("/simple", downloader.NewSimpleDownloadHandler())
 	}
+	if *mode == "realtime" {
+		http.Handle("/realtime", downloader.NewRealtimeDownloadHandler())
+	}
 	if *mode == "redirect" {
 		http.Handle("/redirect", downloader.NewRedirectorHandler())
 	}
