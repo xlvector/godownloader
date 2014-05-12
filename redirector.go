@@ -1,7 +1,7 @@
 package downloader
 
 import (
-	"bufio"
+	//"bufio"
 	"crawler/downloader/graphite"
 	"encoding/json"
 	"fmt"
@@ -82,7 +82,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.processedLinks = NewBloomFilter()
 	ret.usedChannels = make(map[int]int64)
 	ret.urlFilter = NewURLFilter()
-	ret.BatchAddLinkFromFile()
+	//ret.BatchAddLinkFromFile()
 	ret.writer, _ = os.Create("links.tsv")
 	ret.writeCount = 0
 	ret.linksRecvCount = 0
@@ -104,7 +104,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	}
 	return &ret
 }
-
+/*
 func (self *RedirectorHandler) BatchAddLinkFromFile() {
 	f, err := os.Open("links.tsv")
 	defer f.Close()
@@ -120,7 +120,7 @@ func (self *RedirectorHandler) BatchAddLinkFromFile() {
 		self.AddLink(line, "true", "normal")
 	}
 }
-
+*/
 func IsSearchEnginePage(link string) bool {
 	if strings.Contains(link, "http://www.baidu.com/s?word="){
 		return true
@@ -136,7 +136,7 @@ func IsSearchEnginePage(link string) bool {
 
 func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 	log.Println(time.Now().Unix(), "redirector", "receive", link)
-	priority := self.Match(link)
+	priority := self.Match(link.LinkURL)
 
 	isSePage := IsSearchEnginePage(link.Referrer)	
 	if isSePage {
@@ -150,23 +150,23 @@ func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 		priority = PRIORITY_LEVELS
 	}
 	
-	addr := ExtractMainDomain(link)
+	addr := ExtractMainDomain(link.LinkURL)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
-		if isFilter != "false" && CheckBloomFilter(link) {
+		if isFilter != "false" && CheckBloomFilter(link.LinkURL) {
 			return
 		}
 		log.Println(time.Now().Unix(), "redirector", "push_queue", link, priority)
-		query := extractSearchQuery(link)
+		query := extractSearchQuery(link.LinkURL)
 		if len(query) > 0 {
-			setStatus(query, "redirector.push." + ExtractDomainOnly(link))
+			setStatus(query, "redirector.push." + ExtractDomainOnly(link.LinkURL))
 		}
-		self.processedLinks.Add(link)
-		self.linksChannel[ci] <- link
+		self.processedLinks.Add(link.LinkURL)
+		self.linksChannel[ci] <- link.LinkURL
 		self.usedChannels[int(ci)] = time.Now().Unix()
 	} else {
 		if self.writer != nil && rand.Float64() < 0.1 && self.writeCount < 100000 {
-			self.writer.WriteString(link + "\n")
+			self.writer.WriteString(link.LinkURL + "\n")
 			self.writeCount += 1
 		}
 	}
