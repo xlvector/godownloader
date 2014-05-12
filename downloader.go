@@ -193,8 +193,13 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 	}
 }
 
+type Link struct {
+	LinkURL string `json:"url"`
+	Referrer string `json:"referrer"`
+}
+
 type PostBody struct {
-	Links []string `json:"links"`
+	Links []Link `json:"links"`
 }
 
 type Response struct {
@@ -225,7 +230,7 @@ type DownloadHandler struct {
 	ProxyDownloader                []*HTTPGetDownloader
 	RtDownloaderAddrs			[]string
 	signals                        chan os.Signal
-	ExtractedLinksChannel          chan string
+	ExtractedLinksChannel          chan Link
 	PageChannel                    chan WebPage
 	urlFilter                      *URLFilter
 	writer                         *os.File
@@ -399,7 +404,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 			continue
 		}
 		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-			self.ExtractedLinksChannel <- nlink
+			self.ExtractedLinksChannel <- Link{LinkURL: nlink, Referrer: link}
 		}
 	}
 }
@@ -419,15 +424,15 @@ func (self *DownloadHandler) Match(link string) int {
 func (self *DownloadHandler) ProcExtractedLinks() {
 	procn := 0
 	tm := time.Now().Unix()
-	lm := make(map[string]bool)
+	lm := make(map[string]Link)
 	for link := range self.ExtractedLinksChannel {
-		lm[link] = true
+		lm[link.LinkURL] = link
 		tm1 := time.Now().Unix()
 
 		if tm1-tm > 60 || len(lm) > 100 || procn < 10 {
 			pb := PostBody{}
-			pb.Links = []string{}
-			for lk, _ := range lm {
+			pb.Links = []Link{}
+			for _, lk := range lm {
 				pb.Links = append(pb.Links, lk)
 			}
 			jsonBlob, err := json.Marshal(&pb)
@@ -437,7 +442,7 @@ func (self *DownloadHandler) ProcExtractedLinks() {
 				PostHTTPRequest(ConfigInstance().RedirectorHost, req)
 			}
 			tm = time.Now().Unix()
-			lm = make(map[string]bool)
+			lm = make(map[string]Link)
 		}
 		procn += 1
 	}
@@ -457,7 +462,7 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
 	ret.LinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
 	ret.PageChannel = make(chan WebPage, DOWNLOADER_QUEUE_SIZE)
-	ret.ExtractedLinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
+	ret.ExtractedLinksChannel = make(chan Link, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
 	ret.processedPageCount = 0
 	ret.totalDownloadedPageCount = 0
@@ -515,14 +520,14 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			if self.ruleMatcher.MatchRule(link) > 0 {
-				domain := ExtractMainDomain(link)
+			if self.ruleMatcher.MatchRule(link.LinkURL) > 0 {
+				domain := ExtractMainDomain(link.LinkURL)
 				domain = strings.Replace(domain, ".", "_", -1)
 				self.linkRecvCount[domain] += 1
 			}
 
 			if len(self.LinksChannel) < DOWNLOADER_QUEUE_SIZE {
-				self.LinksChannel <- link
+				self.LinksChannel <- link.LinkURL
 			}
 		}
 	}

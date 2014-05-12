@@ -57,7 +57,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			setStatus(query, "redirector.send." + ExtractDomainOnly(link))
 		}
 		pb := PostBody{}
-		pb.Links = []string{link}
+		pb.Links = []Link{Link{LinkURL: link}}
 		jsonBlob, err := json.Marshal(&pb)
 		if err == nil {
 			req := make(map[string]string)
@@ -121,16 +121,35 @@ func (self *RedirectorHandler) BatchAddLinkFromFile() {
 	}
 }
 
-func (self *RedirectorHandler) AddLink(link string, isFilter string, pri string) {
-	log.Println(time.Now().Unix(), "redirector", "receive", link)
+func IsSearchEnginePage(link string) bool {
+	if strings.Contains(link, "http://www.baidu.com/s?word="){
+		return true
+	}
+	if strings.Contains(link, "http://www.sogou.com/"){
+		return true
+	}
+	if strings.Contains(link, "http://www.so.com/"){
+		return true
+	}
+	return false
+}
 
+func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
+	log.Println(time.Now().Unix(), "redirector", "receive", link)
 	priority := self.Match(link)
+
+	isSePage := IsSearchEnginePage(link.Referrer)	
+	if isSePage {
+		priority = PRIORITY_LEVELS - 1
+		log.Println("redirector search engine referrer", link)
+	}
 	if priority <= 0 {
 		return
 	}
 	if pri == "high" {
 		priority = PRIORITY_LEVELS
 	}
+	
 	addr := ExtractMainDomain(link)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
 	if len(self.linksChannel[ci]) < ConfigInstance().RedirectChanSize {
@@ -171,8 +190,8 @@ func (self *RedirectorHandler) ServeHTTP(w http.ResponseWriter, req *http.Reques
 			self.AddLink(link, isFilter, priority)
 
 			self.linksRecvCount += 1
-			if self.urlFilter.Match(link) > 1 {
-				domain := ExtractMainDomain(link)
+			if self.urlFilter.Match(link.LinkURL) > 1 {
+				domain := ExtractMainDomain(link.LinkURL)
 				domain = strings.Replace(domain, ".", "_", -1)
 				self.domainLinksRecvCount[domain] += 1
 			}

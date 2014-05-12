@@ -86,18 +86,18 @@ func GetSitePatterns() map[string]int {
 	}
 	downloadPb := PostBody{}
 	redirectPb := PostBody{}
-	downloadPb.Links = []string{}
-	redirectPb.Links = []string{}
+	downloadPb.Links = []Link{}
+	redirectPb.Links = []Link{}
 	for _, link := range links {
-		redirectPb.Links = append(redirectPb.Links, link.Link)
+		redirectPb.Links = append(redirectPb.Links, Link{LinkURL: link.Link})
 		if len(link.Entrance1) > 0 {
-			downloadPb.Links = append(downloadPb.Links, link.Entrance1)
+			downloadPb.Links = append(downloadPb.Links, Link{LinkURL: link.Entrance1})
 		}
 		if len(link.Entrance2) > 0 {
-			downloadPb.Links = append(downloadPb.Links, link.Entrance2)
+			downloadPb.Links = append(downloadPb.Links, Link{LinkURL: link.Entrance2})
 		}
 		if len(link.Entrance3) > 0 {
-			downloadPb.Links = append(downloadPb.Links, link.Entrance3)
+			downloadPb.Links = append(downloadPb.Links, Link{LinkURL: link.Entrance3})
 		}
 		ret[link.Pattern] = link.Priority
 	}
@@ -113,7 +113,7 @@ func GetSitePatterns() map[string]int {
 		return ret
 	}
 	for _, link := range templateLinks {
-		redirectPb.Links = append(redirectPb.Links, link.Link)
+		redirectPb.Links = append(redirectPb.Links, Link{LinkURL: link.Link})
 		_, ok := ret[link.Pattern]
 		if !ok {
 			ret[link.Pattern] = 2
