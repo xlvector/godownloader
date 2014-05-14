@@ -1,14 +1,12 @@
 package downloader
 
 import (
-	//"bufio"
 	"crawler/downloader/graphite"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -22,8 +20,6 @@ type RedirectorHandler struct {
 	urlFilter            *URLFilter
 	dnsCache             map[string]string
 	usedChannels         map[int]int64
-	writer               *os.File
-	writeCount           int
 	linksRecvCount       int
 	domainLinksRecvCount map[string]int
 	ticker *time.Ticker
@@ -42,7 +38,6 @@ func (self *RedirectorHandler) GetIP(host string) string {
 	if ip == "" {
 		ip = host
 	}
-	log.Println("dns lookup", host, ip)
 	return ip
 }
 
@@ -67,7 +62,6 @@ func (self *RedirectorHandler) Redirect(ci int) {
 		time.Sleep(time.Duration(int64(5 * time.Second) / int64(1 + priority)))
 		if n%200 == 0 {
 			time.Sleep(time.Duration(rand.Int63n(60) / int64(1 + priority)) * time.Second)
-			log.Println("channel sleep : ", ci)
 		}
 	}
 }
@@ -82,20 +76,16 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.processedLinks = NewBloomFilter()
 	ret.usedChannels = make(map[int]int64)
 	ret.urlFilter = NewURLFilter()
-	//ret.BatchAddLinkFromFile()
-	ret.writer, _ = os.Create("links.tsv")
-	ret.writeCount = 0
 	ret.linksRecvCount = 0
 	ret.domainLinksRecvCount = make(map[string]int)
 	ret.ticker = time.NewTicker(time.Second * 60)
 	go func() {
 		for t := range ret.ticker.C {
-			log.Println("refresh rules at", t)
 			newRules := GetSitePatterns()
 			for rule, pri := range newRules {
-				log.Println("add rule", rule, "with priority", pri)
 				ret.urlFilter.ruleMatcher.AddRule(rule, pri)
 			}
+			log.Println(t)
 		}
 	}()
 
@@ -135,7 +125,6 @@ func IsSearchEnginePage(link string) bool {
 }
 
 func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
-	log.Println(time.Now().Unix(), "redirector", "receive", link)
 	priority := self.Match(link.LinkURL)
 
 	isSePage := IsSearchEnginePage(link.Referrer)	
@@ -156,7 +145,6 @@ func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 		if isFilter != "false" && CheckBloomFilter(link.LinkURL) {
 			return
 		}
-		log.Println(time.Now().Unix(), "redirector", "push_queue", link, priority)
 		query := extractSearchQuery(link.LinkURL)
 		if len(query) > 0 {
 			setStatus(query, "redirector.push." + ExtractDomainOnly(link.LinkURL))
@@ -164,11 +152,6 @@ func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 		self.processedLinks.Add(link.LinkURL)
 		self.linksChannel[ci] <- link.LinkURL
 		self.usedChannels[int(ci)] = time.Now().Unix()
-	} else {
-		if self.writer != nil && rand.Float64() < 0.1 && self.writeCount < 100000 {
-			self.writer.WriteString(link.LinkURL + "\n")
-			self.writeCount += 1
-		}
 	}
 }
 
