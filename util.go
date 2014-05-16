@@ -18,7 +18,7 @@ func GetHostName() string {
 	return strings.Replace(strings.ToLower(hostname), ".", "_", -1)
 }
 
-func extractUrlParams(link string) map[string]string{
+func extractUrlParams(link string) map[string]string {
 	tks := strings.Split(link, "?")
 	if len(tks) != 2 {
 		return nil
@@ -88,32 +88,15 @@ func PostHTTPRequest(host string, data map[string]string) string {
 }
 
 func IsChinesePage(html string) bool {
-	if strings.Contains(html, "的") {
+	if strings.Contains(html, "的") || strings.Contains(html, "了") || strings.Contains(html, "中") || strings.Contains(html, "页") {
 		return true
 	}
-	if strings.Contains(html, "了") {
+	if strings.Contains(html, "地") || strings.Contains(html, "是") || strings.Contains(html, "有") || strings.Contains(html, "一") {
 		return true
 	}
-	if strings.Contains(html, "中") {
+	if strings.Contains(html, "个") || strings.Contains(html, "名") || strings.Contains(html, "欢") || strings.Contains(html, "错") {
 		return true
 	}
-	if strings.Contains(html, "页") {
-		return true
-	}
-	if strings.Contains(html, "地") {
-		return true
-	}
-	if strings.Contains(html, "是") {
-		return true
-	}
-	if strings.Contains(html, "有") {
-		return true
-	}
-	if strings.Contains(html, "一") {
-		return true
-	}
-	if strings.Contains(html, "个") {
-		return true
-	}
+
 	return false
 }
