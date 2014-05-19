@@ -97,6 +97,9 @@ func IsChinesePage(html string) bool {
 	if strings.Contains(html, "个") || strings.Contains(html, "名") || strings.Contains(html, "欢") || strings.Contains(html, "错") {
 		return true
 	}
+	if strings.Contains(html, "年") || strings.Contains(html, "月") || strings.Contains(html, "日") {
+		return true
+	}
 
 	return false
 }

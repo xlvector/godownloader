@@ -1,21 +1,21 @@
 package downloader
 
 import (
+	"compress/gzip"
+	"encoding/base64"
 	"log"
 	"net/http"
 	"time"
-	"compress/gzip"
-	"encoding/base64"
 )
 
 type RealtimeDownloadHandler struct {
-	Downloader                     *HTTPGetDownloader
+	Downloader *HTTPGetDownloader
 }
 
 func (self *RealtimeDownloadHandler) ProcessLink(link string) string {
 	log.Println(time.Now().Unix(), "downloader", "start", link)
 	html := ""
-	var err error	
+	var err error
 
 	html, _, err = self.Downloader.Download(link)
 	if err != nil {
@@ -32,7 +32,6 @@ func (self *RealtimeDownloadHandler) ProcessLink(link string) string {
 	log.Println(time.Now().Unix(), "downloader", "finish", link)
 	return html
 }
-
 
 func NewRealtimeDownloadHandler() *RealtimeDownloadHandler {
 	ret := RealtimeDownloadHandler{}
