@@ -225,7 +225,7 @@ type WebSiteStat struct {
 type DownloadHandler struct {
 	ticker *time.Ticker
 	metricSender                   *graphite.Client
-	LinksChannel                   chan string
+	LinksChannel                   chan Link
 	Downloader                     *HTTPGetDownloader
 	ProxyDownloader                []*HTTPGetDownloader
 	RtDownloaderAddrs			[]string
@@ -323,15 +323,15 @@ func (self *DownloadHandler) GetRtDownloaderAddr() string {
 	return self.RtDownloaderAddrs[rand.Intn(len(self.RtDownloaderAddrs))]
 }
 
-func (self *DownloadHandler) ProcessLink(link string) {
-	if !IsValidLink(link) {
+func (self *DownloadHandler) ProcessLink(link Link) {
+	if !IsValidLink(link.LinkURL) {
 		return
 	}
-	query := extractSearchQuery(link)
+	query := extractSearchQuery(link.LinkURL)
 	if len(query) > 0 {
-		setStatus(query, "downloader.start." + ExtractDomainOnly(link))
+		setStatus(query, "downloader.start." + ExtractDomainOnly(link.LinkURL))
 	}
-	log.Println(time.Now().Unix(), "downloader", "start", link)
+	log.Println(time.Now().Unix(), "downloader", "start", link.LinkURL)
 	self.processedPageCount += 1
 	html := ""
 	resp := ""
@@ -339,27 +339,24 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	start := time.Now()
 	
 	rtd := self.GetRtDownloaderAddr()
-	if len(rtd) > 0 {
-		log.Println("realtime downloader", rtd)
-	}
 	if rtd != "" && len(query) > 0 {
 		log.Println("realtime downloader", rtd, "for query", query)
-		html, resp, err = self.Downloader.Download(rtd + base64.URLEncoding.EncodeToString([]byte(link)))
+		html, resp, err = self.Downloader.Download(rtd + base64.URLEncoding.EncodeToString([]byte(link.LinkURL)))
 	}
 	if err != nil || len(html) == 0 {
-		html, resp, err = self.Downloader.Download(link)
+		html, resp, err = self.Downloader.Download(link.LinkURL)
 		if err != nil {
-			log.Println(time.Now().Unix(), "downloader", "self_failed", link, err)
+			log.Println(time.Now().Unix(), "downloader", "self_failed", link.LinkURL, err)
 			for k := 0; k < 2; k++ {
 				downloader := self.GetProxyDownloader()
 				if downloader != nil {
-					html, resp, err = self.GetProxyDownloader().Download(link)
+					html, resp, err = self.GetProxyDownloader().Download(link.LinkURL)
 					if err != nil {
-						log.Println(time.Now().Unix(), "downloader", "proxy_failed", link, err)
+						log.Println(time.Now().Unix(), "downloader", "proxy_failed", link.LinkURL, err)
 						self.proxyDownloadedPageFailedCount += 1
 					} else {
 						self.proxyDownloadedPageCount += 1
-						log.Println(time.Now().Unix(), "downloader", "proxy_success", link)
+						log.Println(time.Now().Unix(), "downloader", "proxy_success", link.LinkURL)
 						break
 					}
 				}
@@ -376,8 +373,8 @@ func (self *DownloadHandler) ProcessLink(link string) {
 	}
 	self.totalDownloadedPageCount += 1
 
-	if self.ruleMatcher.MatchRule(link) == 2 {
-		domain := ExtractMainDomain(link)
+	if self.ruleMatcher.MatchRule(link.LinkURL) == 2 {
+		domain := ExtractMainDomain(link.LinkURL)
 		domain = strings.Replace(domain, ".", "_", -1)
 		self.pageDownloadCount[domain] += 1
 	}
@@ -390,13 +387,14 @@ func (self *DownloadHandler) ProcessLink(link string) {
 		return
 	}
 	log.Println(time.Now().Unix(), "downloader", "finish", link)
-	page := WebPage{Link: link, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
+	resp += "<refer>" + link.Referrer + "</refer>"
+	page := WebPage{Link: link.LinkURL, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
 
 	if len(self.PageChannel) < DOWNLOADER_QUEUE_SIZE {
 		self.PageChannel <- page
 	}
 
-	elinks := ExtractLinks([]byte(html), link)
+	elinks := ExtractLinks([]byte(html), link.LinkURL)
 	for _, elink := range elinks {
 		nlink := NormalizeLink(elink)
 		linkPriority := self.Match(nlink)
@@ -404,7 +402,7 @@ func (self *DownloadHandler) ProcessLink(link string) {
 			continue
 		}
 		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-			self.ExtractedLinksChannel <- Link{LinkURL: nlink, Referrer: link}
+			self.ExtractedLinksChannel <- Link{LinkURL: nlink, Referrer: link.LinkURL}
 		}
 	}
 }
@@ -460,7 +458,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}
 	ret.RtDownloaderAddrs = GetRealtimeDownloaderList()
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
-	ret.LinksChannel = make(chan string, DOWNLOADER_QUEUE_SIZE)
+	ret.LinksChannel = make(chan Link, DOWNLOADER_QUEUE_SIZE)
 	ret.PageChannel = make(chan WebPage, DOWNLOADER_QUEUE_SIZE)
 	ret.ExtractedLinksChannel = make(chan Link, DOWNLOADER_QUEUE_SIZE)
 	ret.Downloader = NewHTTPGetDownloader()
@@ -527,7 +525,7 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 			}
 
 			if len(self.LinksChannel) < DOWNLOADER_QUEUE_SIZE {
-				self.LinksChannel <- link.LinkURL
+				self.LinksChannel <- link
 			}
 		}
 	}

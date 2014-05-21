@@ -16,7 +16,7 @@ const PRIORITY_LEVELS = 6
 type RedirectorHandler struct {
 	metricSender         *graphite.Client
 	processedLinks       *BloomFilter
-	linksChannel         []chan string
+	linksChannel         []chan Link
 	urlFilter            *URLFilter
 	dnsCache             map[string]string
 	usedChannels         map[int]int64
@@ -46,13 +46,13 @@ func (self *RedirectorHandler) Redirect(ci int) {
 	n := 0
 	for link := range self.linksChannel[ci] {
 		n += 1
-		log.Println(time.Now().Unix(), "redirector", "send", link, priority)
-		query := extractSearchQuery(link)
+		log.Println(time.Now().Unix(), "redirector", "send", link.LinkURL, priority)
+		query := extractSearchQuery(link.LinkURL)
 		if len(query) > 0 {
-			setStatus(query, "redirector.send." + ExtractDomainOnly(link))
+			setStatus(query, "redirector.send." + ExtractDomainOnly(link.LinkURL))
 		}
 		pb := PostBody{}
-		pb.Links = []Link{Link{LinkURL: link}}
+		pb.Links = []Link{link}
 		jsonBlob, err := json.Marshal(&pb)
 		if err == nil {
 			req := make(map[string]string)
@@ -69,9 +69,9 @@ func (self *RedirectorHandler) Redirect(ci int) {
 func NewRedirectorHandler() *RedirectorHandler {
 	ret := RedirectorHandler{}
 	ret.metricSender, _ = graphite.New(ConfigInstance().GraphiteHost, "")
-	ret.linksChannel = []chan string{}
+	ret.linksChannel = []chan Link{}
 	for i := 0; i < ConfigInstance().RedirectChanNum*PRIORITY_LEVELS; i++ {
-		ret.linksChannel = append(ret.linksChannel, make(chan string, ConfigInstance().RedirectChanSize))
+		ret.linksChannel = append(ret.linksChannel, make(chan Link, ConfigInstance().RedirectChanSize))
 	}
 	ret.processedLinks = NewBloomFilter()
 	ret.usedChannels = make(map[int]int64)
@@ -150,7 +150,7 @@ func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 			setStatus(query, "redirector.push." + ExtractDomainOnly(link.LinkURL))
 		}
 		self.processedLinks.Add(link.LinkURL)
-		self.linksChannel[ci] <- link.LinkURL
+		self.linksChannel[ci] <- link
 		self.usedChannels[int(ci)] = time.Now().Unix()
 	}
 }
