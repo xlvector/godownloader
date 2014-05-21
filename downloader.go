@@ -179,15 +179,19 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 			if len(query) > 0 {
 				setStatus(query, "downloader.end." + ExtractDomainOnly(url))
 			}
-			utf8Html := self.cleaner.ToUTF8(html)
-			if utf8Html == nil {
-				return "", "", errors.New("conver to utf8 error")
+			if self.cleaner != nil {
+				utf8Html := self.cleaner.ToUTF8(html)
+				if utf8Html == nil {
+					return "", "", errors.New("conver to utf8 error")
+				}
+				cleanHtml := string(self.cleaner.CleanHTML(utf8Html))
+				if IsBlock(cleanHtml) {
+					return "", "", errors.New("blocked")
+				}
+				return string(cleanHtml), cleanRespInfo, nil
+			} else {
+				return string(html), cleanRespInfo, nil
 			}
-			cleanHtml := string(self.cleaner.CleanHTML(utf8Html))
-			if IsBlock(cleanHtml) {
-				return "", "", errors.New("blocked")
-			}
-			return cleanHtml, cleanRespInfo, nil
 		}
 	}
 }
