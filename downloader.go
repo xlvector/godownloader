@@ -183,11 +183,11 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 			if utf8Html == nil {
 				return "", "", errors.New("conver to utf8 error")
 			}
-			cleanHtml := self.cleaner.CleanHTML(utf8Html)
+			cleanHtml := string(self.cleaner.CleanHTML(utf8Html))
 			if IsBlock(cleanHtml) {
 				return "", "", errors.New("blocked")
 			}
-			return string(cleanHtml), cleanRespInfo, nil
+			return cleanHtml, cleanRespInfo, nil
 		}
 	}
 }
