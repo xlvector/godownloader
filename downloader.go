@@ -127,6 +127,8 @@ func NewDefaultHTTPGetProxyDownloader(proxy string) *HTTPGetDownloader {
 }
 
 func setStatus(query, status string) {
+	return
+	/*
 	client := &http.Client{
 		Transport: &http.Transport{
 			Dial:                  dialTimeout,
@@ -134,7 +136,7 @@ func setStatus(query, status string) {
 			ResponseHeaderTimeout: time.Duration(ConfigInstance().DownloadTimeout) * time.Second,
 		},
 	}
-	req, err := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/query." + query + "/" + strconv.FormatInt(time.Now().Unix(), 10) + "." + status, nil)
+	req, err := http.NewRequest("GET", "http://redis.crawler.bdp.cc:8080/LPUSH/search." + query + "/" + strconv.FormatInt(time.Now().Unix(), 10) + "." + status, nil)
 	if err != nil{
 		return
 	}
@@ -144,6 +146,7 @@ func setStatus(query, status string) {
 	}
 	defer resp.Body.Close()
 	ioutil.ReadAll(resp.Body)
+	*/
 }
 
 func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
@@ -176,9 +179,6 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 		if err != nil {
 			return "", "", err
 		} else {
-			if len(query) > 0 {
-				setStatus(query, "downloader.end." + ExtractDomainOnly(url))
-			}
 			if self.cleaner != nil {
 				utf8Html := self.cleaner.ToUTF8(html)
 				if utf8Html == nil {

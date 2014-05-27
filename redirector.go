@@ -132,12 +132,13 @@ func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 		priority = PRIORITY_LEVELS - 1
 		log.Println("redirector search engine referrer", link)
 	}
-	if priority <= 0 {
-		return
-	}
 	if pri == "high" {
 		priority = PRIORITY_LEVELS
 	}
+	if priority <= 0 {
+		return
+	}
+	
 	
 	addr := ExtractMainDomain(link.LinkURL)
 	ci := Hash(addr)%int32(ConfigInstance().RedirectChanNum) + int32((priority-1)*ConfigInstance().RedirectChanNum)
@@ -146,9 +147,6 @@ func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 			return
 		}
 		query := extractSearchQuery(link.LinkURL)
-		if len(query) > 0 {
-			setStatus(query, "redirector.push." + ExtractDomainOnly(link.LinkURL))
-		}
 		self.processedLinks.Add(link.LinkURL)
 		self.linksChannel[ci] <- link
 		self.usedChannels[int(ci)] = time.Now().Unix()
