@@ -146,7 +146,7 @@ func (self *RedirectorHandler) AddLink(link Link, isFilter string, pri string) {
 		if isFilter != "false" && CheckBloomFilter(link.LinkURL) {
 			return
 		}
-		query := extractSearchQuery(link.LinkURL)
+		//query := extractSearchQuery(link.LinkURL)
 		self.processedLinks.Add(link.LinkURL)
 		self.linksChannel[ci] <- link
 		self.usedChannels[int(ci)] = time.Now().Unix()
