@@ -124,14 +124,14 @@ func GetSitePatterns() map[string]int {
 	if err == nil {
 		req := make(map[string]string)
 		req["links"] = string(jsonBlob)
-		PostHTTPRequest(ConfigInstance().RedirectorHost, req)
+		//PostHTTPRequest(ConfigInstance().RedirectorHost, req)
 	}
 
 	jsonBlob, err = json.Marshal(&downloadPb)
 	if err == nil {
 		req := make(map[string]string)
 		req["links"] = string(jsonBlob)
-		PostHTTPRequest(ConfigInstance().DownloaderHost, req)
+		//PostHTTPRequest(ConfigInstance().DownloaderHost, req)
 	}
 	return ret
 }
