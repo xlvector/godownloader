@@ -397,6 +397,7 @@ func (self *DownloadHandler) ProcessLink(link Link) {
 		self.PageChannel <- page
 	}
 
+	/*
 	elinks := ExtractLinks([]byte(html), link.LinkURL)
 	for _, elink := range elinks {
 		nlink := NormalizeLink(elink)
@@ -408,6 +409,7 @@ func (self *DownloadHandler) ProcessLink(link Link) {
 			self.ExtractedLinksChannel <- Link{LinkURL: nlink, Referrer: link.LinkURL}
 		}
 	}
+	*/
 }
 
 func (self *DownloadHandler) Download() {
