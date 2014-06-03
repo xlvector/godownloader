@@ -17,6 +17,7 @@ type Config struct {
 	RedirectChanSize         int      `json:"redirect_chan_size"`
 	WritePageFreq            int      `json:"write_page_freq"`
 	SitePatterns			 map[string]int
+	ExtractLinks			int `json:"extract_links"`
 }
 
 func NewDefaultConfig() *Config {

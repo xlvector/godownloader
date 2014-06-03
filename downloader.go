@@ -397,15 +397,17 @@ func (self *DownloadHandler) ProcessLink(link Link) {
 		self.PageChannel <- page
 	}
 
-	elinks := ExtractLinks([]byte(html), link.LinkURL)
-	for _, elink := range elinks {
-		nlink := NormalizeLink(elink)
-		linkPriority := self.Match(nlink)
-		if linkPriority <= 0 {
-			continue
-		}
-		if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
-			self.ExtractedLinksChannel <- Link{LinkURL: nlink, Referrer: link.LinkURL}
+	if ConfigInstance().ExtractLinks() == 1 {
+		elinks := ExtractLinks([]byte(html), link.LinkURL)
+		for _, elink := range elinks {
+			nlink := NormalizeLink(elink)
+			linkPriority := self.Match(nlink)
+			if linkPriority <= 0 {
+				continue
+			}
+			if IsValidLink(nlink) && len(self.ExtractedLinksChannel) < DOWNLOADER_QUEUE_SIZE {
+				self.ExtractedLinksChannel <- Link{LinkURL: nlink, Referrer: link.LinkURL}
+			}
 		}
 	}
 }
