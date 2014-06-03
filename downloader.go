@@ -397,7 +397,7 @@ func (self *DownloadHandler) ProcessLink(link Link) {
 		self.PageChannel <- page
 	}
 
-	if ConfigInstance().ExtractLinks() == 1 {
+	if ConfigInstance().ExtractLinks == 1 {
 		elinks := ExtractLinks([]byte(html), link.LinkURL)
 		for _, elink := range elinks {
 			nlink := NormalizeLink(elink)
