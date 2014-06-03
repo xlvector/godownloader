@@ -78,7 +78,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.urlFilter = NewURLFilter()
 	ret.linksRecvCount = 0
 	ret.domainLinksRecvCount = make(map[string]int)
-	ret.ticker = time.NewTicker(time.Second * 60)
+	ret.ticker = time.NewTicker(time.Second * 600)
 	go func() {
 		for t := range ret.ticker.C {
 			newRules := GetSitePatterns()

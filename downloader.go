@@ -397,7 +397,6 @@ func (self *DownloadHandler) ProcessLink(link Link) {
 		self.PageChannel <- page
 	}
 
-	/*
 	elinks := ExtractLinks([]byte(html), link.LinkURL)
 	for _, elink := range elinks {
 		nlink := NormalizeLink(elink)
@@ -409,7 +408,6 @@ func (self *DownloadHandler) ProcessLink(link Link) {
 			self.ExtractedLinksChannel <- Link{LinkURL: nlink, Referrer: link.LinkURL}
 		}
 	}
-	*/
 }
 
 func (self *DownloadHandler) Download() {
@@ -485,7 +483,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}
 	log.Println("proxy downloader count", len(ret.ProxyDownloader))
 
-	ret.ticker = time.NewTicker(time.Second * 60)
+	ret.ticker = time.NewTicker(time.Second * 600)
 	go func() {
 		for t := range ret.ticker.C {
 			log.Println("refresh rules at", t)
