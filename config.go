@@ -8,6 +8,8 @@ import (
 
 type Config struct {
 	DownloaderHost           string   `json:"downloader_host"`
+	HighPriorityDLHost	string `json:"high_priority_downloader_host"`
+	LowPriorityDLHost	string `json:"low_priority_downloader_host"`
 	RedirectorHost           string   `json:"redirector_host"`
 	FilterHost               string   `json:"filter_host"`
 	GraphiteHost             string   `json:"graphite_host"`

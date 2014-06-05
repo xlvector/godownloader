@@ -57,7 +57,11 @@ func (self *RedirectorHandler) Redirect(ci int) {
 		if err == nil {
 			req := make(map[string]string)
 			req["links"] = string(jsonBlob)
-			PostHTTPRequest(ConfigInstance().DownloaderHost, req)
+			if(priority == PRIORITY_LEVELS) {
+				PostHTTPRequest(ConfigInstance().HighPriorityDLHost, req)
+			} else {
+				PostHTTPRequest(ConfigInstance().LowPriorityDLHost, req)
+			}
 		}
 		if priority < PRIORITY_LEVELS - 1 {
 			time.Sleep(time.Duration(int64(time.Second) * 10 / int64(1 + priority)))
@@ -82,7 +86,7 @@ func NewRedirectorHandler() *RedirectorHandler {
 	ret.urlFilter = NewURLFilter()
 	ret.linksRecvCount = 0
 	ret.domainLinksRecvCount = make(map[string]int)
-	ret.ticker = time.NewTicker(time.Second * 600)
+	ret.ticker = time.NewTicker(time.Second * 3600)
 	go func() {
 		for t := range ret.ticker.C {
 			newRules := GetSitePatterns()

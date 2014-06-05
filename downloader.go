@@ -485,7 +485,7 @@ func NewDownloadHanler() *DownloadHandler {
 	}
 	log.Println("proxy downloader count", len(ret.ProxyDownloader))
 
-	ret.ticker = time.NewTicker(time.Second * 600)
+	ret.ticker = time.NewTicker(time.Second * 3600)
 	go func() {
 		for t := range ret.ticker.C {
 			log.Println("refresh rules at", t)
