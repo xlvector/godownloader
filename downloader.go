@@ -222,7 +222,6 @@ type WebSiteStat struct {
 	linkRecvCount     map[string]int
 	pageDownloadCount map[string]int
 	pageWriteCount    map[string]int
-	ruleMatcher       *RuleMatcher
 }
 
 type DownloadHandler struct {
@@ -270,11 +269,6 @@ func (self *DownloadHandler) WritePage(page WebPage) {
 	SetBloomFilter(page.Link)
 
 	self.writePageCount += 1
-	if self.ruleMatcher.MatchRule(page.Link) == 2 {
-		domain := ExtractMainDomain(page.Link)
-		domain = strings.Replace(domain, ".", "_", -1)
-		self.pageWriteCount[domain] += 1
-	}
 
 	self.writer.WriteString(strconv.FormatInt(page.DownloadedAt, 10))
 	self.writer.WriteString("\t")
@@ -376,12 +370,6 @@ func (self *DownloadHandler) ProcessLink(link Link) {
 	}
 	self.totalDownloadedPageCount += 1
 
-	if self.ruleMatcher.MatchRule(link.LinkURL) == 2 {
-		domain := ExtractMainDomain(link.LinkURL)
-		domain = strings.Replace(domain, ".", "_", -1)
-		self.pageDownloadCount[domain] += 1
-	}
-
 	if len(html) < 100 {
 		return
 	}
@@ -474,7 +462,6 @@ func NewDownloadHanler() *DownloadHandler {
 	ret.linkRecvCount = make(map[string]int)
 	ret.pageDownloadCount = make(map[string]int)
 	ret.pageWriteCount = make(map[string]int)
-	ret.ruleMatcher = NewRuleMatcher()
 
 	for _, proxy := range GetProxyList() {
 		pd := NewHTTPGetProxyDownloader(proxy)
@@ -484,18 +471,6 @@ func NewDownloadHanler() *DownloadHandler {
 		ret.ProxyDownloader = append(ret.ProxyDownloader, pd)
 	}
 	log.Println("proxy downloader count", len(ret.ProxyDownloader))
-
-	ret.ticker = time.NewTicker(time.Second * 3600)
-	go func() {
-		for t := range ret.ticker.C {
-			log.Println("refresh rules at", t)
-			newRules := GetSitePatterns()
-			for rule, pri := range newRules {
-				log.Println("add rule", rule, "with priority", pri)
-				ret.urlFilter.ruleMatcher.AddRule(rule, pri)
-			}
-		}
-	}()
 
 	ret.signals = make(chan os.Signal, 1)
 	signal.Notify(ret.signals, syscall.SIGINT)
@@ -523,12 +498,6 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		json.Unmarshal([]byte(links), &pb)
 
 		for _, link := range pb.Links {
-			if self.ruleMatcher.MatchRule(link.LinkURL) > 0 {
-				domain := ExtractMainDomain(link.LinkURL)
-				domain = strings.Replace(domain, ".", "_", -1)
-				self.linkRecvCount[domain] += 1
-			}
-
 			if len(self.LinksChannel) < DOWNLOADER_QUEUE_SIZE {
 				self.LinksChannel <- link
 			}
@@ -550,18 +519,6 @@ func (self *DownloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageCount", int64(self.proxyDownloadedPageCount), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".proxyDownloadedPageFailedCount", int64(self.proxyDownloadedPageFailedCount), 1.0)
 		self.metricSender.Gauge("crawler.downloader."+GetHostName()+"."+Port+".writePageCount", int64(self.writePageCount), 1.0)
-		for domain, downcount := range self.pageDownloadCount {
-			metricName := "crawler.downloader." + GetHostName() + "." + Port + ".domainDownloadPageCount." + domain
-			self.metricSender.Gauge(metricName, int64(downcount), 1.0)
-		}
-		for domain, writecount := range self.pageWriteCount {
-			metricName := "crawler.downloader." + GetHostName() + "." + Port + ".domainWritePageCount." + domain
-			self.metricSender.Gauge(metricName, int64(writecount), 1.0)
-		}
-		for domain, recvcount := range self.linkRecvCount {
-			metricName := "crawler.downloader." + GetHostName() + "." + Port + ".domainLinkRecvCount." + domain
-			self.metricSender.Gauge(metricName, int64(recvcount), 1.0)
-		}
 	}
 	output, _ := json.Marshal(&ret)
 	fmt.Fprint(w, string(output))
