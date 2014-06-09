@@ -156,6 +156,12 @@ func (self *HTTPGetDownloader) Download(url string) (string, string, error) {
 	if err != nil || req == nil || req.Header == nil {
 		return "", "", err
 	}
+	
+	if strings.Contains(url, "http://www.baidu.com/") {
+		expire := time.Now().AddDate(0, 0, 1)
+		cookie := http.Cookie{"BAIDUUID", "74D20AADE2DD67FE23016935054F5A24:SL=0:NR=100:FG=1", "/", ".baidu.com", expire, expire.Format(time.UnixDate), 86400, true, true, "BAIDUUID=74D20AADE2DD67FE23016935054F5A24:SL=0:NR=100:FG=1", []string{"BAIDUUID=74D20AADE2DD67FE23016935054F5A24:SL=0:NR=100:FG=1"}}
+		req.AddCookie(&cookie)
+	}
 	req.Header.Set("User-Agent", USER_AGENT)
 	req.Header.Set("hello", "world")
 	resp, err := self.client.Do(req)
