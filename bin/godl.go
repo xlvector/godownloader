@@ -24,6 +24,9 @@ func main() {
 	if *mode == "simple" {
 		http.Handle("/simple", downloader.NewSimpleDownloadHandler())
 	}
+	if *mode == "image" {
+		http.Handle("/image", downloader.NewPicDownloadHandler())
+	}
 	if *mode == "realtime" {
 		http.Handle("/realtime", downloader.NewRealtimeDownloadHandler())
 	}
