@@ -22,6 +22,7 @@ import (
 	"syscall"
 	"time"
 	"unicode/utf8"
+	l4g "code.google.com/p/log4go"
 )
 
 type PicDownloadHandler struct {
@@ -36,7 +37,6 @@ type PicDownloadHandler struct {
 }
 
 func (self *PicDownloadHandler) WritePage(page WebPage) {
-
 	if !utf8.ValidString(page.Link) {
 		return
 	}
@@ -53,7 +53,7 @@ func (self *PicDownloadHandler) WritePage(page WebPage) {
 	self.writer.WriteString("\t")
 	self.writer.WriteString(page.RespInfo)
 	self.writer.WriteString("\n")
-	log.Println(time.Now().Unix(), "downloader", "write", page.Link)
+	l4g.Info(time.Now().Unix(), "downloader", "write", page.Link)
 }
 
 func (self *PicDownloadHandler) FlushPages() {
@@ -62,7 +62,7 @@ func (self *PicDownloadHandler) FlushPages() {
 		self.WritePage(page)
 		self.flushFileSize += 1
 
-		writePageFreq := 100
+		writePageFreq := 1000
 		if writePageFreq > 0 && self.flushFileSize%writePageFreq == 0 {
 			self.writer.Close()
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
@@ -103,7 +103,7 @@ func LoadImageFromURL(link string, proxy string) image.Image {
 		defer resp.Body.Close()
 		img, _, err := image.Decode(resp.Body)
 		if err != nil {
-			log.Println(err)
+			l4g.Warn(err)
 			img = nil
 		}
 		return img
@@ -111,7 +111,7 @@ func LoadImageFromURL(link string, proxy string) image.Image {
 }
 
 func (self *PicDownloadHandler) ProcessLink(link string) {
-	log.Println(time.Now().Unix(), "downloader", "start", link)
+	l4g.Info(time.Now().Unix(), "downloader", "start", link)
 	html := ""
 	resp := ""
 
@@ -121,16 +121,16 @@ func (self *PicDownloadHandler) ProcessLink(link string) {
 		err := png.Encode(buf, memImage)
 		
 		if err == nil {
-			log.Println(time.Now().Unix(), "downloader", "finish", link)
+			l4g.Info(time.Now().Unix(), "downloader", "finish", link)
 			html = base64.StdEncoding.EncodeToString(buf.Bytes())
 			page := WebPage{Link: link, Html: html, RespInfo: resp, DownloadedAt: time.Now().Unix()}
 
 			self.PageChannel <- page
 		} else {
-			log.Println("Unable to load image for "+link+". ", err)
+			l4g.Warn("Unable to load image for "+link+". ", err)
 		}
 	} else {
-		log.Println("Unable to load image for " + link)
+		l4g.Warn("Unable to load image for " + link)
 	}
 	return
 }
@@ -143,6 +143,8 @@ func (self *PicDownloadHandler) Download() {
 }
 
 func NewPicDownloadHandler() *PicDownloadHandler {
+	l4g.LoadConfiguration("log4go.xml")
+	
 	ret := PicDownloadHandler{}
 	var err error
 	ret.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
