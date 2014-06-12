@@ -65,6 +65,7 @@ func (self *PicDownloadHandler) FlushPages() {
 		writePageFreq := 1000
 		if writePageFreq > 0 && self.flushFileSize%writePageFreq == 0 {
 			self.writer.Close()
+			os.Rename("./images/" + self.currentPath, "./images.old/" + self.currentPath)
 			self.currentPath = strconv.FormatInt(time.Now().UnixNano(), 10) + ".tsv"
 			var err error
 			self.writer, err = os.Create("./images/" + self.currentPath)
