@@ -64,7 +64,7 @@ func (self *RedirectorHandler) Redirect(ci int) {
 			}
 		}
 		if priority < PRIORITY_LEVELS - 1 {
-			time.Sleep(time.Duration(int64(time.Second) * 10 / int64(1 + priority)))
+			time.Sleep(time.Duration(int64(time.Second) * 3 / int64(1 + priority)))
 		} else {
 			time.Sleep(time.Duration(int64(time.Second) / 10))
 		}
