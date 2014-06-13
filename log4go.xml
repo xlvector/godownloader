@@ -9,7 +9,7 @@
     <tag>file</tag>
     <type>file</type>
     <level>FINEST</level>
-    <property name="filename">log/godl.log</property>
+    <property name="filename">log/picdl.log</property>
     <!--
        %T - Time (15:04:05 MST)
        %t - Time (15:04)
